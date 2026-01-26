@@ -278,6 +278,47 @@ const AdminHomeSections = () => {
           </div>
         );
 
+      case "video":
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>ID do Vídeo do YouTube *</Label>
+              <Input
+                value={formData.content.video_id || ""}
+                onChange={(e) => updateContent("video_id", e.target.value)}
+                placeholder="Ex: dQw4w9WgXcQ"
+              />
+              <p className="text-xs text-muted-foreground">
+                O ID é a parte final da URL do YouTube. Ex: youtube.com/watch?v=<strong>dQw4w9WgXcQ</strong>
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>URL da Thumbnail (opcional)</Label>
+              <Input
+                value={formData.content.thumbnail_url || ""}
+                onChange={(e) => updateContent("thumbnail_url", e.target.value)}
+                placeholder="Deixe vazio para usar a thumbnail do YouTube"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Título do Vídeo</Label>
+              <Input
+                value={formData.content.video_title || ""}
+                onChange={(e) => updateContent("video_title", e.target.value)}
+                placeholder="Ex: Igreja Luz do Evangelho"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição do Vídeo</Label>
+              <Input
+                value={formData.content.video_description || ""}
+                onChange={(e) => updateContent("video_description", e.target.value)}
+                placeholder="Ex: Transformando vidas desde 1985"
+              />
+            </div>
+          </div>
+        );
+
       case "prayer":
       case "contact":
         return (
