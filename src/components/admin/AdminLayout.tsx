@@ -6,7 +6,6 @@ import {
   Calendar,
   Users,
   Image,
-  Video,
   Radio,
   MessageSquare,
   Heart,
@@ -16,6 +15,7 @@ import {
   X,
   ChevronRight,
   Shield,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -30,6 +30,7 @@ const sidebarItems = [
   { icon: Calendar, label: "Eventos", href: "/admin/eventos" },
   { icon: Users, label: "Ministérios", href: "/admin/ministerios" },
   { icon: Image, label: "Galeria", href: "/admin/galeria" },
+  { icon: FileText, label: "Blog", href: "/admin/blog" },
   { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
   { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
   { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },

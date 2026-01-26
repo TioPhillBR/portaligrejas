@@ -19,6 +19,11 @@ import AdminPrayerRequests from "./pages/admin/PrayerRequests";
 import AdminMessages from "./pages/admin/Messages";
 import AdminUsers from "./pages/admin/Users";
 import AdminBroadcast from "./pages/admin/Broadcast";
+import AdminBlog from "./pages/admin/Blog";
+import EventDetails from "./pages/EventDetails";
+import MinistryDetails from "./pages/MinistryDetails";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import MemberLayout from "./components/member/MemberLayout";
 import MemberDashboard from "./pages/member/MemberDashboard";
 import MemberProfile from "./pages/member/MemberProfile";
@@ -46,6 +51,10 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Register />} />
             <Route path="/setup" element={<Setup />} />
+            <Route path="/evento/:id" element={<EventDetails />} />
+            <Route path="/ministerio/:id" element={<MinistryDetails />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
@@ -59,6 +68,7 @@ const App = () => (
               <Route path="mensagens" element={<AdminMessages />} />
               <Route path="usuarios" element={<AdminUsers />} />
               <Route path="comunicacao" element={<AdminBroadcast />} />
+              <Route path="blog" element={<AdminBlog />} />
             </Route>
             
             {/* Member Routes */}
