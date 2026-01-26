@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useImageUpload } from "@/hooks/useImageUpload";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 interface SiteSettings {
   general: {
@@ -32,6 +34,7 @@ interface SiteSettings {
   donations: {
     pix_key: string;
     pix_type: string;
+    pix_image_url: string;
     bank_name: string;
     bank_code: string;
     agency: string;
@@ -46,13 +49,14 @@ const defaultSettings: SiteSettings = {
   social: { facebook: "", instagram: "", youtube: "" },
   radio: { stream_url: "", name: "" },
   video: { youtube_id: "", title: "" },
-  donations: { pix_key: "", pix_type: "email", bank_name: "", bank_code: "", agency: "", account: "", holder: "", cnpj: "" },
+  donations: { pix_key: "", pix_type: "email", pix_image_url: "", bank_name: "", bank_code: "", agency: "", account: "", holder: "", cnpj: "" },
 };
 
 const AdminSettings = () => {
   const [settings, setSettings] = useState<SiteSettings>(defaultSettings);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
+  const { uploadImage, uploading, progress } = useImageUpload({ folder: "settings" });
 
   useEffect(() => {
     fetchSettings();
@@ -287,70 +291,94 @@ const AdminSettings = () => {
               <CardTitle>Doações</CardTitle>
               <CardDescription>Configurações de PIX e dados bancários</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Chave PIX</Label>
-                  <Input
-                    value={settings.donations.pix_key}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_key: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <Label>Tipo (email, cpf, cnpj, telefone)</Label>
-                  <Input
-                    value={settings.donations.pix_type}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_type: e.target.value } })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Banco</Label>
-                  <Input
-                    value={settings.donations.bank_name}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_name: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <Label>Código do Banco</Label>
-                  <Input
-                    value={settings.donations.bank_code}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_code: e.target.value } })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Agência</Label>
-                  <Input
-                    value={settings.donations.agency}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, agency: e.target.value } })}
-                  />
-                </div>
-                <div>
-                  <Label>Conta</Label>
-                  <Input
-                    value={settings.donations.account}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, account: e.target.value } })}
-                  />
-                </div>
-              </div>
+            <CardContent className="space-y-6">
+              {/* PIX QR Code Image */}
               <div>
-                <Label>Titular</Label>
-                <Input
-                  value={settings.donations.holder}
-                  onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, holder: e.target.value } })}
+                <Label className="text-base font-semibold">QR Code PIX</Label>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Carregue a imagem do QR Code PIX que será exibida na página de doações
+                </p>
+                <ImageUpload
+                  value={settings.donations.pix_image_url}
+                  onChange={(url) => setSettings({ ...settings, donations: { ...settings.donations, pix_image_url: url || "" } })}
+                  onUpload={uploadImage}
+                  uploading={uploading}
+                  progress={progress}
+                  aspectRatio="square"
                 />
               </div>
-              <div>
-                <Label>CNPJ</Label>
-                <Input
-                  value={settings.donations.cnpj}
-                  onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, cnpj: e.target.value } })}
-                />
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-4">Dados do PIX</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Chave PIX</Label>
+                    <Input
+                      value={settings.donations.pix_key}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_key: e.target.value } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Tipo (email, cpf, cnpj, telefone)</Label>
+                    <Input
+                      value={settings.donations.pix_type}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_type: e.target.value } })}
+                    />
+                  </div>
+                </div>
               </div>
-              <Button onClick={() => saveSettings("donations")} disabled={saving === "donations"} className="gap-2">
+
+              <div className="border-t pt-4">
+                <h4 className="font-medium mb-4">Dados Bancários</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Banco</Label>
+                    <Input
+                      value={settings.donations.bank_name}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_name: e.target.value } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Código do Banco</Label>
+                    <Input
+                      value={settings.donations.bank_code}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_code: e.target.value } })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label>Agência</Label>
+                    <Input
+                      value={settings.donations.agency}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, agency: e.target.value } })}
+                    />
+                  </div>
+                  <div>
+                    <Label>Conta</Label>
+                    <Input
+                      value={settings.donations.account}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, account: e.target.value } })}
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Label>Titular</Label>
+                  <Input
+                    value={settings.donations.holder}
+                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, holder: e.target.value } })}
+                  />
+                </div>
+                <div className="mt-4">
+                  <Label>CNPJ</Label>
+                  <Input
+                    value={settings.donations.cnpj}
+                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, cnpj: e.target.value } })}
+                  />
+                </div>
+              </div>
+
+              <Button onClick={() => saveSettings("donations")} disabled={saving === "donations" || uploading} className="gap-2">
                 {saving === "donations" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Salvar
               </Button>
