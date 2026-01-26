@@ -37,6 +37,7 @@ const sidebarItems = [
   { icon: Image, label: "Galeria", href: "/admin/galeria" },
   { icon: FileText, label: "Blog", href: "/admin/blog" },
   { icon: BarChart3, label: "Estatísticas Blog", href: "/admin/blog/estatisticas" },
+  { icon: Users, label: "Categorias Blog", href: "/admin/blog/categorias" },
   { icon: MessageCircle, label: "Comentários", href: "/admin/comentarios" },
   { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
   { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },

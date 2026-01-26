@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          slug: string
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          slug: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          slug?: string
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -85,6 +121,7 @@ export type Database = {
         Row: {
           author_id: string | null
           category: string | null
+          category_id: string | null
           content: string
           created_at: string
           excerpt: string | null
@@ -93,6 +130,7 @@ export type Database = {
           is_featured: boolean | null
           is_published: boolean | null
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           title: string
           updated_at: string
@@ -100,6 +138,7 @@ export type Database = {
         Insert: {
           author_id?: string | null
           category?: string | null
+          category_id?: string | null
           content: string
           created_at?: string
           excerpt?: string | null
@@ -108,6 +147,7 @@ export type Database = {
           is_featured?: boolean | null
           is_published?: boolean | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug: string
           title: string
           updated_at?: string
@@ -115,6 +155,7 @@ export type Database = {
         Update: {
           author_id?: string | null
           category?: string | null
+          category_id?: string | null
           content?: string
           created_at?: string
           excerpt?: string | null
@@ -123,11 +164,20 @@ export type Database = {
           is_featured?: boolean | null
           is_published?: boolean | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "blog_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       broadcast_messages: {
         Row: {
