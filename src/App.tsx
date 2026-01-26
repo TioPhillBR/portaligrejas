@@ -16,6 +16,7 @@ import AdminGallery from "./pages/admin/Gallery";
 import AdminSettings from "./pages/admin/Settings";
 import AdminPrayerRequests from "./pages/admin/PrayerRequests";
 import AdminMessages from "./pages/admin/Messages";
+import AdminUsers from "./pages/admin/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="configuracoes" element={<AdminSettings />} />
               <Route path="oracoes" element={<AdminPrayerRequests />} />
               <Route path="mensagens" element={<AdminMessages />} />
+              <Route path="usuarios" element={<AdminUsers />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
