@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Home,
   MessageCircle,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -35,6 +36,7 @@ const sidebarItems = [
   { icon: Users, label: "Ministérios", href: "/admin/ministerios" },
   { icon: Image, label: "Galeria", href: "/admin/galeria" },
   { icon: FileText, label: "Blog", href: "/admin/blog" },
+  { icon: BarChart3, label: "Estatísticas Blog", href: "/admin/blog/estatisticas" },
   { icon: MessageCircle, label: "Comentários", href: "/admin/comentarios" },
   { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
   { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
