@@ -292,6 +292,23 @@ const AdminHomeSections = () => {
                 O ID é a parte final da URL do YouTube. Ex: youtube.com/watch?v=<strong>dQw4w9WgXcQ</strong>
               </p>
             </div>
+
+            {/* Video Preview */}
+            {formData.content.video_id && (
+              <div className="space-y-2">
+                <Label>Pré-visualização</Label>
+                <div className="aspect-video rounded-lg overflow-hidden border bg-muted">
+                  <iframe
+                    src={`https://www.youtube.com/embed/${formData.content.video_id}`}
+                    title="Pré-visualização do vídeo"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label>URL da Thumbnail (opcional)</Label>
               <Input
