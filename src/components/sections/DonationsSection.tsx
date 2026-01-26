@@ -1,17 +1,47 @@
 import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Heart, Copy, Check, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface DonationSettings {
+  pix_key?: string;
+  pix_image_url?: string;
+  bank_name?: string;
+  bank_code?: string;
+  agency?: string;
+  account?: string;
+  account_holder?: string;
+  cnpj?: string;
+}
 
 const DonationsSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [copiedPix, setCopiedPix] = useState(false);
+  const [settings, setSettings] = useState<DonationSettings>({});
+  const [loading, setLoading] = useState(true);
 
-  // Replace with actual PIX key
-  const pixKey = "contato@igrejaluz.com.br";
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data, error } = await supabase
+        .from("site_settings")
+        .select("value")
+        .eq("key", "donations")
+        .single();
+
+      if (!error && data) {
+        setSettings(data.value as DonationSettings);
+      }
+      setLoading(false);
+    };
+
+    fetchSettings();
+  }, []);
+
+  const pixKey = settings.pix_key || "contato@igrejaluz.com.br";
 
   const copyPixKey = () => {
     navigator.clipboard.writeText(pixKey);
@@ -66,11 +96,19 @@ const DonationsSection = () => {
                   Escaneie o QR Code ou copie a chave PIX
                 </p>
 
-                {/* QR Code Placeholder */}
+                {/* QR Code Image or Placeholder */}
                 <div className="bg-white p-4 rounded-lg inline-block mb-6">
-                  <div className="w-40 h-40 bg-muted rounded flex items-center justify-center">
-                    <QrCode className="w-20 h-20 text-muted-foreground" />
-                  </div>
+                  {settings.pix_image_url ? (
+                    <img
+                      src={settings.pix_image_url}
+                      alt="QR Code PIX"
+                      className="w-40 h-40 object-contain"
+                    />
+                  ) : (
+                    <div className="w-40 h-40 bg-muted rounded flex items-center justify-center">
+                      <QrCode className="w-20 h-20 text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
 
                 {/* PIX Key */}
@@ -124,25 +162,31 @@ const DonationsSection = () => {
                 <div className="space-y-4">
                   <div className="bg-secondary/50 rounded-lg p-4">
                     <p className="text-xs text-muted-foreground mb-1">Banco</p>
-                    <p className="font-semibold text-foreground">Banco do Brasil (001)</p>
+                    <p className="font-semibold text-foreground">
+                      {settings.bank_name || "Banco do Brasil"} ({settings.bank_code || "001"})
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-secondary/50 rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Agência</p>
-                      <p className="font-semibold text-foreground">1234-5</p>
+                      <p className="font-semibold text-foreground">{settings.agency || "1234-5"}</p>
                     </div>
                     <div className="bg-secondary/50 rounded-lg p-4">
                       <p className="text-xs text-muted-foreground mb-1">Conta</p>
-                      <p className="font-semibold text-foreground">12345-6</p>
+                      <p className="font-semibold text-foreground">{settings.account || "12345-6"}</p>
                     </div>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-4">
                     <p className="text-xs text-muted-foreground mb-1">Titular</p>
-                    <p className="font-semibold text-foreground">Igreja Luz do Evangelho</p>
+                    <p className="font-semibold text-foreground">
+                      {settings.account_holder || "Igreja Luz do Evangelho"}
+                    </p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-4">
                     <p className="text-xs text-muted-foreground mb-1">CNPJ</p>
-                    <p className="font-semibold text-foreground">12.345.678/0001-90</p>
+                    <p className="font-semibold text-foreground">
+                      {settings.cnpj || "12.345.678/0001-90"}
+                    </p>
                   </div>
                 </div>
               </CardContent>
