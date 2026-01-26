@@ -13,6 +13,7 @@ const navItems = [
   { label: "Ministérios", href: "#ministerios" },
   { label: "Quem Somos", href: "#quem-somos" },
   { label: "Galeria", href: "#galeria" },
+  { label: "Blog", href: "/blog", isRoute: true },
   { label: "Contato", href: "#contato" },
 ];
 
@@ -29,7 +30,11 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (href: string) => {
+  const scrollToSection = (href: string, isRoute?: boolean) => {
+    if (isRoute) {
+      setIsMobileMenuOpen(false);
+      return;
+    }
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
@@ -52,18 +57,33 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
           {navItems.map((item) => (
-            <button
-              key={item.href}
-              onClick={() => scrollToSection(item.href)}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                isScrolled
-                  ? "text-foreground hover:bg-accent/50"
-                  : "text-white/90 hover:text-white hover:bg-white/10"
-              )}
-            >
-              {item.label}
-            </button>
+            item.isRoute ? (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                  isScrolled
+                    ? "text-foreground hover:bg-accent/50"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                )}
+              >
+                {item.label}
+              </Link>
+            ) : (
+              <button
+                key={item.href}
+                onClick={() => scrollToSection(item.href)}
+                className={cn(
+                  "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                  isScrolled
+                    ? "text-foreground hover:bg-accent/50"
+                    : "text-white/90 hover:text-white hover:bg-white/10"
+                )}
+              >
+                {item.label}
+              </button>
+            )
           ))}
         </nav>
 
@@ -111,13 +131,24 @@ const Header = () => {
         <nav className="lg:hidden absolute top-full left-0 right-0 glass-effect shadow-lg animate-fade-in">
           <div className="container-custom py-4 flex flex-col gap-1">
             {navItems.map((item) => (
-              <button
-                key={item.href}
-                onClick={() => scrollToSection(item.href)}
-                className="px-4 py-3 text-left rounded-lg text-foreground font-medium hover:bg-accent/50 transition-colors"
-              >
-                {item.label}
-              </button>
+              item.isRoute ? (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="px-4 py-3 text-left rounded-lg text-foreground font-medium hover:bg-accent/50 transition-colors"
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.href}
+                  onClick={() => scrollToSection(item.href)}
+                  className="px-4 py-3 text-left rounded-lg text-foreground font-medium hover:bg-accent/50 transition-colors"
+                >
+                  {item.label}
+                </button>
+              )
             ))}
             <Button
               onClick={() => scrollToSection("#contato")}
