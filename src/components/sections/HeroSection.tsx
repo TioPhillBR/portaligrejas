@@ -3,13 +3,30 @@ import { Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-worship.jpg";
 
-const HeroSection = () => {
+interface HeroSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      background_image?: string;
+      cta_text?: string;
+      cta_link?: string;
+    };
+  };
+}
+
+const HeroSection = ({ sectionData }: HeroSectionProps) => {
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  const bgImage = sectionData?.content?.background_image || heroImage;
+  const title = sectionData?.title || "Transformando vidas através do Evangelho";
+  const ctaText = sectionData?.content?.cta_text || "Assista ao Vivo";
+  const ctaLink = sectionData?.content?.cta_link || "#video";
 
   return (
     <section
@@ -19,7 +36,7 @@ const HeroSection = () => {
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroImage})` }}
+        style={{ backgroundImage: `url(${typeof bgImage === 'string' ? bgImage : heroImage})` }}
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
       </div>
@@ -49,8 +66,14 @@ const HeroSection = () => {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-tight"
           >
-            Transformando vidas
-            <span className="block text-gold">através do Evangelho</span>
+            {title.includes("através") ? (
+              <>
+                Transformando vidas
+                <span className="block text-gold">através do Evangelho</span>
+              </>
+            ) : (
+              <span className="text-gold">{title}</span>
+            )}
           </motion.h1>
 
           {/* Subtitle with Bible verse */}
@@ -78,10 +101,10 @@ const HeroSection = () => {
             <Button
               size="lg"
               className="btn-gold text-lg px-8 py-6 gap-2"
-              onClick={() => scrollToSection("#video")}
+              onClick={() => scrollToSection(ctaLink)}
             >
               <Play className="w-5 h-5" />
-              Assista ao Vivo
+              {ctaText}
             </Button>
             <Button
               size="lg"

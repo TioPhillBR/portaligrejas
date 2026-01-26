@@ -5,27 +5,52 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-const PrayerRequestSection = () => {
+interface PrayerRequestSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      description?: string;
+    };
+  };
+}
+
+const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [prayerRequest, setPrayerRequest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const title = sectionData?.title || "Pedido de Oração";
+  const description = sectionData?.content?.description || 
+    "Compartilhe seu pedido conosco. Nossa equipe de intercessores estará orando por você. Seu pedido é confidencial.";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prayerRequest.trim()) return;
 
     setIsSubmitting(true);
-    // Simulate submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    const { error } = await supabase
+      .from("prayer_requests")
+      .insert({ message: prayerRequest.trim() });
 
-    toast({
-      title: "Pedido de oração enviado!",
-      description: "Nossa equipe de intercessores estará orando por você.",
-    });
-
-    setPrayerRequest("");
+    if (error) {
+      toast({
+        title: "Erro ao enviar",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Pedido de oração enviado!",
+        description: "Nossa equipe de intercessores estará orando por você.",
+      });
+      setPrayerRequest("");
+    }
+    
     setIsSubmitting(false);
   };
 
@@ -46,11 +71,10 @@ const PrayerRequestSection = () => {
                     <Heart className="w-8 h-8 text-primary" />
                   </div>
                   <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
-                    Pedido de Oração
+                    {title}
                   </h2>
                   <p className="text-muted-foreground">
-                    Compartilhe seu pedido conosco. Nossa equipe de intercessores
-                    estará orando por você. Seu pedido é confidencial.
+                    {description}
                   </p>
                 </div>
 
