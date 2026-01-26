@@ -28,6 +28,8 @@ import MinistryChat from "./pages/member/MinistryChat";
 import MemberDirectMessages from "./pages/member/MemberDirectMessages";
 import DirectMessageChat from "./pages/member/DirectMessageChat";
 import MemberBroadcasts from "./pages/member/MemberBroadcasts";
+import MemberEvents from "./pages/member/MemberEvents";
+import MemberSearch from "./pages/member/MemberSearch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,11 +65,13 @@ const App = () => (
             <Route path="/membro" element={<MemberLayout />}>
               <Route index element={<MemberDashboard />} />
               <Route path="perfil" element={<MemberProfile />} />
+              <Route path="eventos" element={<MemberEvents />} />
               <Route path="ministerios" element={<MemberMinistries />} />
               <Route path="grupos" element={<MemberGroups />} />
               <Route path="grupos/:ministryId" element={<MinistryChat />} />
               <Route path="mensagens" element={<MemberDirectMessages />} />
               <Route path="mensagens/:recipientId" element={<DirectMessageChat />} />
+              <Route path="buscar" element={<MemberSearch />} />
               <Route path="avisos" element={<MemberBroadcasts />} />
             </Route>
             

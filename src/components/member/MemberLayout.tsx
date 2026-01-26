@@ -12,6 +12,8 @@ import {
   X,
   ChevronRight,
   Send,
+  Calendar,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,9 +26,11 @@ import { supabase } from "@/integrations/supabase/client";
 const sidebarItems = [
   { icon: Home, label: "Início", href: "/membro" },
   { icon: User, label: "Meu Perfil", href: "/membro/perfil" },
+  { icon: Calendar, label: "Eventos", href: "/membro/eventos" },
   { icon: Users, label: "Ministérios", href: "/membro/ministerios" },
   { icon: MessageCircle, label: "Grupos", href: "/membro/grupos" },
   { icon: Send, label: "Mensagens", href: "/membro/mensagens" },
+  { icon: Search, label: "Buscar Membros", href: "/membro/buscar" },
   { icon: Bell, label: "Avisos", href: "/membro/avisos" },
 ];
 

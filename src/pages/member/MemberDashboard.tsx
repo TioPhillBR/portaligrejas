@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Users, MessageCircle, Bell, ChevronRight, User } from "lucide-react";
+import { Users, MessageCircle, Bell, ChevronRight, User, Calendar, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { format, isToday, isFuture } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Ministry {
   id: string;
@@ -19,11 +22,19 @@ interface BroadcastMessage {
   created_at: string;
 }
 
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  time: string | null;
+}
+
 const MemberDashboard = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ full_name: string | null } | null>(null);
   const [myMinistries, setMyMinistries] = useState<Ministry[]>([]);
   const [recentBroadcasts, setRecentBroadcasts] = useState<BroadcastMessage[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -67,6 +78,20 @@ const MemberDashboard = () => {
         setRecentBroadcasts(broadcastData);
       }
 
+      // Fetch upcoming events
+      const today = new Date().toISOString().split('T')[0];
+      const { data: eventsData } = await supabase
+        .from("events")
+        .select("id, title, date, time")
+        .eq("is_active", true)
+        .gte("date", today)
+        .order("date", { ascending: true })
+        .limit(3);
+
+      if (eventsData) {
+        setUpcomingEvents(eventsData);
+      }
+
       setLoading(false);
     };
 
@@ -101,7 +126,7 @@ const MemberDashboard = () => {
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Link to="/membro/perfil">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-4 flex flex-col items-center text-center gap-2">
@@ -109,6 +134,16 @@ const MemberDashboard = () => {
                 <User className="w-6 h-6 text-primary" />
               </div>
               <span className="text-sm font-medium">Meu Perfil</span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link to="/membro/eventos">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium">Eventos</span>
             </CardContent>
           </Card>
         </Link>
@@ -142,7 +177,61 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
+        <Link to="/membro/buscar">
+          <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
+            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Search className="w-6 h-6 text-primary" />
+              </div>
+              <span className="text-sm font-medium">Buscar Membros</span>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
+
+      {/* Upcoming Events */}
+      {upcomingEvents.length > 0 && (
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-lg">Próximos Eventos</CardTitle>
+            <Link to="/membro/eventos">
+              <Button variant="ghost" size="sm">
+                Ver todos <ChevronRight className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {upcomingEvents.map((event) => (
+                <Link
+                  key={event.id}
+                  to="/membro/eventos"
+                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                >
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary">
+                    <span className="text-xs font-medium">
+                      {format(new Date(event.date), "MMM", { locale: ptBR }).toUpperCase()}
+                    </span>
+                    <span className="text-lg font-bold">
+                      {format(new Date(event.date), "d")}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium truncate">{event.title}</h4>
+                    {event.time && (
+                      <p className="text-sm text-muted-foreground">{event.time}</p>
+                    )}
+                  </div>
+                  {isToday(new Date(event.date)) && (
+                    <Badge>Hoje</Badge>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* My Ministries */}
