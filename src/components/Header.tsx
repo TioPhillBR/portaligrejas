@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
@@ -66,9 +67,24 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          
+          <Link to="/login">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn(
+                "transition-colors",
+                isScrolled
+                  ? "text-foreground hover:bg-accent/50"
+                  : "text-white/90 hover:text-white hover:bg-white/10"
+              )}
+              aria-label="Login"
+            >
+              <LogIn className="h-5 w-5" />
+            </Button>
+          </Link>
           
           <Button
             onClick={() => scrollToSection("#contato")}
