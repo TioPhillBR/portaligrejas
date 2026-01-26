@@ -1,15 +1,37 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { Play, Video } from "lucide-react";
+import { useHomeSection } from "@/hooks/useHomeSections";
 
-const VideoSection = () => {
+interface VideoSectionProps {
+  sectionData?: {
+    title?: string | null;
+    subtitle?: string | null;
+    content?: {
+      video_id?: string;
+      thumbnail_url?: string;
+      video_title?: string;
+      video_description?: string;
+    };
+  };
+}
+
+const VideoSection = ({ sectionData }: VideoSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  // Fallback to database if no sectionData provided
+  const { section } = useHomeSection("video");
+  const content = sectionData?.content || section?.content || {};
 
-  // Replace with your actual YouTube video ID
-  const videoId = "dQw4w9WgXcQ";
-  const thumbnailUrl = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=1200&h=675&fit=crop";
+  // Get video ID from content or use default
+  const videoId = content.video_id || "dQw4w9WgXcQ";
+  const thumbnailUrl = content.thumbnail_url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+  const videoTitle = content.video_title || "Igreja Luz do Evangelho";
+  const videoDescription = content.video_description || "Transformando vidas desde 1985";
+  const sectionTitle = sectionData?.title || section?.title || "Vídeo";
+  const sectionSubtitle = sectionData?.subtitle || section?.subtitle || "Conheça um pouco mais sobre nossa igreja e a obra que Deus tem realizado através de nós.";
 
   return (
     <section id="video" className="section-padding" ref={ref}>
@@ -26,11 +48,16 @@ const VideoSection = () => {
             Assista
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4">
-            Vídeo <span className="text-gold">Institucional</span>
+            {sectionTitle.includes(" ") ? (
+              <>
+                {sectionTitle.split(" ")[0]} <span className="text-gold">{sectionTitle.split(" ").slice(1).join(" ")}</span>
+              </>
+            ) : (
+              <>Vídeo <span className="text-gold">Institucional</span></>
+            )}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Conheça um pouco mais sobre nossa igreja e a obra que Deus tem
-            realizado através de nós.
+            {sectionSubtitle}
           </p>
         </motion.div>
 
@@ -49,6 +76,10 @@ const VideoSection = () => {
                   src={thumbnailUrl}
                   alt="Vídeo Institucional"
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    // Fallback to hqdefault if maxresdefault doesn't exist
+                    e.currentTarget.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                  }}
                 />
                 
                 {/* Overlay */}
@@ -68,10 +99,10 @@ const VideoSection = () => {
                 {/* Title Overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
                   <h3 className="text-white text-xl font-display font-semibold">
-                    Igreja Luz do Evangelho
+                    {videoTitle}
                   </h3>
                   <p className="text-white/70 text-sm">
-                    Transformando vidas desde 1985
+                    {videoDescription}
                   </p>
                 </div>
               </>
