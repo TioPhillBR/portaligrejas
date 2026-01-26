@@ -13,6 +13,8 @@ import { ptBR } from "date-fns/locale";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import AudioRecorder from "@/components/chat/AudioRecorder";
 import AudioPlayer from "@/components/chat/AudioPlayer";
+import VideoPlayer from "@/components/chat/VideoPlayer";
+import VideoUploader from "@/components/chat/VideoUploader";
 
 interface Message {
   id: string;
@@ -184,6 +186,17 @@ const MinistryChat = () => {
     });
   };
 
+  const handleSendVideo = async (videoUrl: string) => {
+    if (!user || !ministryId) return;
+
+    await supabase.from("chat_messages").insert({
+      ministry_id: ministryId,
+      sender_id: user.id,
+      message_type: "video",
+      media_url: videoUrl,
+    });
+  };
+
   const addEmoji = (emoji: string) => {
     setNewMessage((prev) => prev + emoji);
   };
@@ -259,6 +272,12 @@ const MinistryChat = () => {
                   )}
                   {message.message_type === "audio" && message.media_url && (
                     <AudioPlayer 
+                      src={message.media_url} 
+                      isOwn={isOwnMessage(message.sender_id)} 
+                    />
+                  )}
+                  {message.message_type === "video" && message.media_url && (
+                    <VideoPlayer 
                       src={message.media_url} 
                       isOwn={isOwnMessage(message.sender_id)} 
                     />
@@ -340,6 +359,9 @@ const MinistryChat = () => {
               </span>
             </Button>
           </label>
+
+          {/* Video Upload */}
+          <VideoUploader onVideoUploaded={handleSendVideo} disabled={sending} />
 
           {/* Audio Recorder */}
           <AudioRecorder onSendAudio={handleSendAudio} disabled={sending} />

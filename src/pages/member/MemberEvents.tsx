@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Calendar, MapPin, Clock, Users, Check, HelpCircle, X } from "lucide-react";
+import { Calendar, MapPin, Clock, Users, Check, HelpCircle, X, Share2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,8 @@ import { format, isPast, isToday, isFuture } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+const APP_URL = typeof window !== 'undefined' ? window.location.origin : '';
 
 interface Event {
   id: string;
@@ -196,6 +198,39 @@ const MemberEvents = () => {
     });
   };
 
+  const generateWhatsAppLink = (event: Event) => {
+    const eventDate = format(new Date(event.date), "d 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const eventLink = `${APP_URL}/membro/eventos`;
+    
+    let message = `🎉 *Convite para Evento*\n\n`;
+    message += `📌 *${event.title}*\n\n`;
+    
+    if (event.description) {
+      message += `${event.description}\n\n`;
+    }
+    
+    message += `📅 *Data:* ${eventDate}\n`;
+    
+    if (event.time) {
+      message += `⏰ *Horário:* ${event.time}\n`;
+    }
+    
+    if (event.location) {
+      message += `📍 *Local:* ${event.location}\n`;
+    }
+    
+    message += `\n✅ Confirme sua presença pelo link:\n${eventLink}`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    return `https://wa.me/?text=${encodedMessage}`;
+  };
+
+  const handleShareWhatsApp = (event: Event) => {
+    const link = generateWhatsAppLink(event);
+    window.open(link, '_blank');
+    toast({ title: "Abrindo WhatsApp..." });
+  };
+
   const EventCard = ({ event }: { event: Event }) => {
     const rsvp = myRSVPs.get(event.id);
     const counts = attendeeCounts.get(event.id);
@@ -230,6 +265,17 @@ const MemberEvents = () => {
                 <Badge variant="secondary" className="mt-1">{event.category}</Badge>
               )}
             </div>
+            {eventStatus !== "past" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleShareWhatsApp(event)}
+                className="shrink-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                title="Compartilhar via WhatsApp"
+              >
+                <Share2 className="w-5 h-5" />
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
