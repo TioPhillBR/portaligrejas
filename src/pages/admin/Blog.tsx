@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Clock,
   Calendar as CalendarIcon,
+  Tag,
+  X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -91,6 +93,13 @@ interface BlogCategory {
   color: string;
 }
 
+interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+}
+
 const AdminBlog = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -109,6 +118,7 @@ const AdminBlog = () => {
     scheduled_at: null as Date | null,
   });
   const [scheduleTime, setScheduleTime] = useState("09:00");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { uploadImage, uploading, progress } = useImageUpload({
     bucket: "church-images",
@@ -128,6 +138,29 @@ const AdminBlog = () => {
     },
   });
 
+  const { data: tags } = useQuery({
+    queryKey: ["blog-tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_tags")
+        .select("id, name, slug, color")
+        .order("name");
+      if (error) throw error;
+      return data as BlogTag[];
+    },
+  });
+
+  const { data: postTags } = useQuery({
+    queryKey: ["blog-post-tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_post_tags")
+        .select("post_id, tag_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: posts, isLoading } = useQuery({
     queryKey: ["admin-blog-posts"],
     queryFn: async () => {
@@ -142,12 +175,12 @@ const AdminBlog = () => {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { tagIds: string[] }) => {
       const scheduledAt = data.scheduled_at 
         ? combineDateTime(data.scheduled_at, scheduleTime).toISOString()
         : null;
       
-      const { error } = await supabase.from("blog_posts").insert({
+      const { data: newPost, error } = await supabase.from("blog_posts").insert({
         title: data.title,
         slug: data.slug,
         excerpt: data.excerpt,
@@ -160,11 +193,22 @@ const AdminBlog = () => {
         scheduled_at: scheduledAt,
         author_id: user?.id,
         published_at: data.is_published && !scheduledAt ? new Date().toISOString() : null,
-      });
+      }).select().single();
       if (error) throw error;
+
+      // Insert tags
+      if (data.tagIds.length > 0) {
+        const tagInserts = data.tagIds.map((tagId) => ({
+          post_id: newPost.id,
+          tag_id: tagId,
+        }));
+        const { error: tagError } = await supabase.from("blog_post_tags").insert(tagInserts);
+        if (tagError) throw tagError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-post-tags"] });
       toast.success("Artigo criado com sucesso!");
       resetForm();
     },
@@ -172,7 +216,7 @@ const AdminBlog = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+    mutationFn: async ({ id, data, tagIds }: { id: string; data: typeof formData; tagIds: string[] }) => {
       const scheduledAt = data.scheduled_at 
         ? combineDateTime(data.scheduled_at, scheduleTime).toISOString()
         : null;
@@ -197,9 +241,21 @@ const AdminBlog = () => {
         .update(updateData)
         .eq("id", id);
       if (error) throw error;
+
+      // Update tags: delete existing and insert new
+      await supabase.from("blog_post_tags").delete().eq("post_id", id);
+      if (tagIds.length > 0) {
+        const tagInserts = tagIds.map((tagId) => ({
+          post_id: id,
+          tag_id: tagId,
+        }));
+        const { error: tagError } = await supabase.from("blog_post_tags").insert(tagInserts);
+        if (tagError) throw tagError;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-blog-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["blog-post-tags"] });
       toast.success("Artigo atualizado com sucesso!");
       resetForm();
     },
@@ -273,6 +329,7 @@ const AdminBlog = () => {
       scheduled_at: null,
     });
     setScheduleTime("09:00");
+    setSelectedTags([]);
     setEditingPost(null);
     setIsDialogOpen(false);
   };
@@ -295,16 +352,25 @@ const AdminBlog = () => {
       is_featured: post.is_featured,
       scheduled_at: scheduledDate,
     });
+    // Load post tags
+    const tagIds = postTags?.filter((pt) => pt.post_id === post.id).map((pt) => pt.tag_id) || [];
+    setSelectedTags(tagIds);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editingPost) {
-      updateMutation.mutate({ id: editingPost.id, data: formData });
+      updateMutation.mutate({ id: editingPost.id, data: formData, tagIds: selectedTags });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate({ ...formData, tagIds: selectedTags });
     }
+  };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+    );
   };
 
   const generateSlug = (title: string) => {
@@ -438,6 +504,36 @@ const AdminBlog = () => {
                 />
               </div>
 
+              {/* Tags Selection */}
+              {tags && tags.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-muted-foreground" />
+                    <Label>Tags</Label>
+                  </div>
+                  <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/30">
+                    {tags.map((tag) => (
+                      <Badge
+                        key={tag.id}
+                        variant={selectedTags.includes(tag.id) ? "default" : "outline"}
+                        className="cursor-pointer transition-all hover:scale-105"
+                        style={{
+                          backgroundColor: selectedTags.includes(tag.id) ? tag.color : undefined,
+                          borderColor: tag.color,
+                          color: selectedTags.includes(tag.id) ? "white" : undefined,
+                        }}
+                        onClick={() => toggleTag(tag.id)}
+                      >
+                        {tag.name}
+                        {selectedTags.includes(tag.id) && (
+                          <X className="h-3 w-3 ml-1" />
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="content">Conteúdo *</Label>
                 <RichTextEditor
@@ -448,7 +544,6 @@ const AdminBlog = () => {
                   placeholder="Escreva o conteúdo do artigo..."
                 />
               </div>
-
               {/* Scheduling Section */}
               <div className="border rounded-lg p-4 space-y-4 bg-muted/30">
                 <div className="flex items-center gap-2">

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, ArrowRight, Search } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Search, Tag, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +12,24 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+}
+
+interface BlogCategory {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+}
+
 const Blog = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const { data: posts, isLoading } = useQuery({
     queryKey: ["blog-posts"],
@@ -30,16 +45,61 @@ const Blog = () => {
     },
   });
 
-  const categories = posts
-    ? [...new Set(posts.map((post) => post.category).filter(Boolean))]
-    : [];
+  const { data: categories } = useQuery({
+    queryKey: ["blog-categories-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_categories")
+        .select("id, name, slug, color")
+        .eq("is_active", true)
+        .order("sort_order");
+      if (error) throw error;
+      return data as BlogCategory[];
+    },
+  });
+
+  const { data: tags } = useQuery({
+    queryKey: ["blog-tags-public"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_tags")
+        .select("id, name, slug, color")
+        .order("name");
+      if (error) throw error;
+      return data as BlogTag[];
+    },
+  });
+
+  const { data: postTags } = useQuery({
+    queryKey: ["blog-post-tags"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_post_tags")
+        .select("post_id, tag_id");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const getTagsForPost = (postId: string) => {
+    const tagIds = postTags?.filter((pt) => pt.post_id === postId).map((pt) => pt.tag_id) || [];
+    return tags?.filter((tag) => tagIds.includes(tag.id)) || [];
+  };
 
   const filteredPosts = posts?.filter((post) => {
     const matchesSearch =
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.excerpt?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = !selectedCategory || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
+    const matchesCategory = !selectedCategory || post.category_id === selectedCategory;
+    
+    // Filter by selected tags
+    let matchesTags = true;
+    if (selectedTags.length > 0) {
+      const postTagIds = postTags?.filter((pt) => pt.post_id === post.id).map((pt) => pt.tag_id) || [];
+      matchesTags = selectedTags.every((tagId) => postTagIds.includes(tagId));
+    }
+    
+    return matchesSearch && matchesCategory && matchesTags;
   });
 
   const featuredPost = filteredPosts?.find((post) => post.is_featured);
@@ -50,6 +110,20 @@ const Blog = () => {
     const words = content.split(/\s+/).length;
     return Math.max(1, Math.ceil(words / wordsPerMinute));
   };
+
+  const toggleTag = (tagId: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
+    );
+  };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory(null);
+    setSelectedTags([]);
+  };
+
+  const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
 
   return (
     <>
@@ -64,9 +138,9 @@ const Blog = () => {
             </p>
           </div>
 
-          {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-8">
-            <div className="relative flex-1">
+          {/* Search */}
+          <div className="mb-6">
+            <div className="relative max-w-md mx-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar artigos..."
@@ -75,26 +149,80 @@ const Blog = () => {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant={selectedCategory === null ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(null)}
-              >
-                Todos
-              </Button>
-              {categories.map((category) => (
-                <Button
-                  key={category}
-                  variant={selectedCategory === category ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(category as string)}
-                >
-                  {category}
-                </Button>
-              ))}
-            </div>
           </div>
+
+          {/* Category Filter */}
+          {categories && categories.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-muted-foreground">Categorias:</span>
+              </div>
+              <div className="flex gap-2 flex-wrap justify-center">
+                <Button
+                  variant={selectedCategory === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  Todas
+                </Button>
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant={selectedCategory === category.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category.id)}
+                    className="gap-2"
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: category.color }}
+                    />
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tags Filter */}
+          {tags && tags.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-2 justify-center">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-muted-foreground">Tags:</span>
+              </div>
+              <div className="flex gap-2 flex-wrap justify-center">
+                {tags.map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant={selectedTags.includes(tag.id) ? "default" : "outline"}
+                    className="cursor-pointer transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: selectedTags.includes(tag.id) ? tag.color : undefined,
+                      borderColor: tag.color,
+                      color: selectedTags.includes(tag.id) ? "white" : undefined,
+                    }}
+                    onClick={() => toggleTag(tag.id)}
+                  >
+                    {tag.name}
+                    {selectedTags.includes(tag.id) && (
+                      <X className="h-3 w-3 ml-1" />
+                    )}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Clear Filters */}
+          {hasActiveFilters && (
+            <div className="text-center mb-6">
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Limpar Filtros
+              </Button>
+            </div>
+          )}
 
           {isLoading ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -112,10 +240,7 @@ const Blog = () => {
               <p className="text-lg text-muted-foreground mb-4">
                 Nenhum artigo encontrado
               </p>
-              <Button variant="outline" onClick={() => {
-                setSearchQuery("");
-                setSelectedCategory(null);
-              }}>
+              <Button variant="outline" onClick={clearFilters}>
                 Limpar Filtros
               </Button>
             </div>
@@ -139,7 +264,18 @@ const Blog = () => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-8">
-                      <Badge className="mb-4">Destaque</Badge>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <Badge>Destaque</Badge>
+                        {getTagsForPost(featuredPost.id).map((tag) => (
+                          <Badge
+                            key={tag.id}
+                            style={{ backgroundColor: tag.color }}
+                            className="text-white"
+                          >
+                            {tag.name}
+                          </Badge>
+                        ))}
+                      </div>
                       <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 group-hover:text-primary transition-colors">
                         {featuredPost.title}
                       </h2>
@@ -192,6 +328,21 @@ const Blog = () => {
                       )}
                     </div>
                     <div className="p-5">
+                      {/* Tags */}
+                      {getTagsForPost(post.id).length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {getTagsForPost(post.id).slice(0, 3).map((tag) => (
+                            <Badge
+                              key={tag.id}
+                              variant="outline"
+                              className="text-xs"
+                              style={{ borderColor: tag.color, color: tag.color }}
+                            >
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                       <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
                         {post.title}
                       </h3>
