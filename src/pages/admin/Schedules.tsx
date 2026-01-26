@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useDragReorder } from "@/hooks/useDragReorder";
 
 interface ServiceSchedule {
   id: string;
@@ -33,6 +34,40 @@ const AdminSchedules = () => {
     name: "",
     icon: "Users",
   });
+
+  const handleReorder = async (reorderedItems: ServiceSchedule[]) => {
+    setSchedules(reorderedItems);
+
+    const updates = reorderedItems.map((item) => ({
+      id: item.id,
+      sort_order: item.sort_order,
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("service_schedules")
+        .update({ sort_order: update.sort_order })
+        .eq("id", update.id);
+
+      if (error) {
+        toast({ title: "Erro ao reordenar", variant: "destructive" });
+        fetchSchedules();
+        return;
+      }
+    }
+
+    toast({ title: "Ordem atualizada!" });
+  };
+
+  const {
+    draggedItem,
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder({ items: schedules, onReorder: handleReorder });
 
   useEffect(() => {
     fetchSchedules();
@@ -124,7 +159,7 @@ const AdminSchedules = () => {
             Horários de Culto
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie os horários dos cultos e atividades
+            Gerencie os horários dos cultos e atividades. Arraste para reordenar.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
@@ -203,9 +238,20 @@ const AdminSchedules = () => {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {schedules.map((schedule) => (
-                <div key={schedule.id} className="flex items-center gap-4 p-4 hover:bg-muted/50">
-                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+              {schedules.map((schedule, index) => (
+                <div
+                  key={schedule.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, schedule)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-all duration-200 ${
+                    draggedItem?.id === schedule.id ? "opacity-50 bg-muted" : ""
+                  } ${dragOverIndex === index ? "ring-2 ring-primary ring-inset" : ""}`}
+                >
+                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <div className="flex-1">
                     <div className="font-medium">{schedule.name}</div>
                     <div className="text-sm text-muted-foreground">

@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { useDragReorder } from "@/hooks/useDragReorder";
 
 interface Ministry {
   id: string;
@@ -53,6 +54,40 @@ const AdminMinistries = () => {
     leader_name: "",
     is_active: true,
   });
+
+  const handleReorder = async (reorderedItems: Ministry[]) => {
+    setMinistries(reorderedItems);
+
+    const updates = reorderedItems.map((item) => ({
+      id: item.id,
+      sort_order: item.sort_order,
+    }));
+
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("ministries")
+        .update({ sort_order: update.sort_order })
+        .eq("id", update.id);
+
+      if (error) {
+        toast({ title: "Erro ao reordenar", variant: "destructive" });
+        fetchMinistries();
+        return;
+      }
+    }
+
+    toast({ title: "Ordem atualizada!" });
+  };
+
+  const {
+    draggedItem,
+    dragOverIndex,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder({ items: ministries, onReorder: handleReorder });
 
   useEffect(() => {
     fetchMinistries();
@@ -155,7 +190,7 @@ const AdminMinistries = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Ministérios</h1>
-          <p className="text-muted-foreground mt-1">Gerencie os ministérios da igreja</p>
+          <p className="text-muted-foreground mt-1">Gerencie os ministérios da igreja. Arraste para reordenar.</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
@@ -262,12 +297,25 @@ const AdminMinistries = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
-          {ministries.map((ministry) => (
-            <Card key={ministry.id} className={!ministry.is_active ? "opacity-50" : ""}>
+        <div className="grid gap-2">
+          {ministries.map((ministry, index) => (
+            <Card
+              key={ministry.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, ministry)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`transition-all duration-200 ${
+                !ministry.is_active ? "opacity-50" : ""
+              } ${draggedItem?.id === ministry.id ? "opacity-50 scale-95" : ""} ${
+                dragOverIndex === index ? "ring-2 ring-primary ring-offset-2" : ""
+              }`}
+            >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
-                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab" />
+                  <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${ministry.color} flex items-center justify-center text-white font-bold`}>
                     {ministry.name.charAt(0)}
                   </div>
