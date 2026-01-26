@@ -20,6 +20,7 @@ import AdminMessages from "./pages/admin/Messages";
 import AdminUsers from "./pages/admin/Users";
 import AdminBroadcast from "./pages/admin/Broadcast";
 import AdminBlog from "./pages/admin/Blog";
+import AdminBlogStats from "./pages/admin/BlogStats";
 import AdminComments from "./pages/admin/Comments";
 import AdminHomeSections from "./pages/admin/HomeSections";
 import EventDetails from "./pages/EventDetails";
@@ -72,6 +73,7 @@ const App = () => (
               <Route path="usuarios" element={<AdminUsers />} />
               <Route path="comunicacao" element={<AdminBroadcast />} />
               <Route path="blog" element={<AdminBlog />} />
+              <Route path="blog/estatisticas" element={<AdminBlogStats />} />
               <Route path="comentarios" element={<AdminComments />} />
             </Route>
             

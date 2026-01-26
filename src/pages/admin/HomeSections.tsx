@@ -11,6 +11,7 @@ import {
   Type,
   Settings2,
 } from "lucide-react";
+import { useDragReorder } from "@/hooks/useDragReorder";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -112,6 +113,44 @@ const AdminHomeSections = () => {
       setEditingSection(null);
     },
     onError: () => toast.error("Erro ao atualizar seção"),
+  });
+
+  const reorderMutation = useMutation({
+    mutationFn: async (items: HomeSection[]) => {
+      const updates = items.map((item, index) => ({
+        id: item.id,
+        sort_order: index,
+      }));
+      
+      for (const update of updates) {
+        const { error } = await supabase
+          .from("home_sections")
+          .update({ sort_order: update.sort_order })
+          .eq("id", update.id);
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["home-sections"] });
+      toast.success("Ordem atualizada!");
+    },
+    onError: () => toast.error("Erro ao reordenar seções"),
+  });
+
+  const {
+    draggedItem,
+    dragOverIndex,
+    droppedItemId,
+    handleDragStart,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    handleDragEnd,
+  } = useDragReorder({
+    items: sections || [],
+    onReorder: async (items) => {
+      await reorderMutation.mutateAsync(items);
+    },
   });
 
   const toggleVisibility = (section: HomeSection) => {
@@ -281,12 +320,31 @@ const AdminHomeSections = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {sections?.map((section) => (
-            <Card key={section.id}>
+          {sections?.map((section, index) => (
+            <Card
+              key={section.id}
+              draggable
+              onDragStart={(e) => handleDragStart(e, section)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragLeave={handleDragLeave}
+              onDrop={(e) => handleDrop(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`transition-all duration-200 ${
+                draggedItem?.id === section.id ? "opacity-50 scale-95" : ""
+              } ${
+                dragOverIndex === index && draggedItem?.id !== section.id
+                  ? "border-primary border-2 shadow-lg"
+                  : ""
+              } ${
+                droppedItemId === section.id
+                  ? "animate-[bounce_0.4s_ease-out] ring-2 ring-primary ring-offset-2"
+                  : ""
+              }`}
+            >
               <CardHeader className="py-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-move" />
+                    <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
                     <div>
                       <CardTitle className="text-base">
                         {sectionLabels[section.section_key] || section.section_key}
