@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BlogComments from "@/components/blog/BlogComments";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -179,16 +180,18 @@ const BlogPost = () => {
 
           <Separator className="mb-8" />
 
-          {/* Post Content */}
-          <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-            {post.content.split("\n").map((paragraph, index) => (
-              paragraph.trim() && (
-                <p key={index}>{paragraph}</p>
-              )
-            ))}
-          </div>
+          {/* Post Content - Render HTML from WYSIWYG */}
+          <div 
+            className="prose prose-lg dark:prose-invert max-w-none mb-12"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
 
           <Separator className="mb-8" />
+
+          {/* Comments Section */}
+          <BlogComments postId={post.id} />
+
+          <Separator className="my-8" />
 
           {/* Share Section */}
           <div className="bg-card rounded-xl p-6 border text-center mb-12">

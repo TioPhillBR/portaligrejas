@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import RichTextEditor from "@/components/admin/RichTextEditor";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -327,15 +328,12 @@ const AdminBlog = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="content">Conteúdo *</Label>
-                <Textarea
-                  id="content"
-                  value={formData.content}
-                  onChange={(e) =>
-                    setFormData({ ...formData, content: e.target.value })
+                <RichTextEditor
+                  content={formData.content}
+                  onChange={(content) =>
+                    setFormData({ ...formData, content })
                   }
                   placeholder="Escreva o conteúdo do artigo..."
-                  rows={10}
-                  required
                 />
               </div>
 

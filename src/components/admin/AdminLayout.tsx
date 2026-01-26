@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Shield,
   FileText,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -122,6 +123,16 @@ const AdminLayout = () => {
                   </Link>
                 );
               })}
+              {/* Link to main site */}
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors mt-4 border-t pt-4"
+              >
+                <ExternalLink className="w-5 h-5" />
+                Ver Site
+              </a>
             </nav>
           </ScrollArea>
 
