@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Setup from "./pages/Setup";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -17,6 +18,16 @@ import AdminSettings from "./pages/admin/Settings";
 import AdminPrayerRequests from "./pages/admin/PrayerRequests";
 import AdminMessages from "./pages/admin/Messages";
 import AdminUsers from "./pages/admin/Users";
+import AdminBroadcast from "./pages/admin/Broadcast";
+import MemberLayout from "./components/member/MemberLayout";
+import MemberDashboard from "./pages/member/MemberDashboard";
+import MemberProfile from "./pages/member/MemberProfile";
+import MemberMinistries from "./pages/member/MemberMinistries";
+import MemberGroups from "./pages/member/MemberGroups";
+import MinistryChat from "./pages/member/MinistryChat";
+import MemberDirectMessages from "./pages/member/MemberDirectMessages";
+import DirectMessageChat from "./pages/member/DirectMessageChat";
+import MemberBroadcasts from "./pages/member/MemberBroadcasts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,7 +42,10 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/cadastro" element={<Register />} />
             <Route path="/setup" element={<Setup />} />
+            
+            {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
               <Route path="horarios" element={<AdminSchedules />} />
@@ -42,7 +56,21 @@ const App = () => (
               <Route path="oracoes" element={<AdminPrayerRequests />} />
               <Route path="mensagens" element={<AdminMessages />} />
               <Route path="usuarios" element={<AdminUsers />} />
+              <Route path="comunicacao" element={<AdminBroadcast />} />
             </Route>
+            
+            {/* Member Routes */}
+            <Route path="/membro" element={<MemberLayout />}>
+              <Route index element={<MemberDashboard />} />
+              <Route path="perfil" element={<MemberProfile />} />
+              <Route path="ministerios" element={<MemberMinistries />} />
+              <Route path="grupos" element={<MemberGroups />} />
+              <Route path="grupos/:ministryId" element={<MinistryChat />} />
+              <Route path="mensagens" element={<MemberDirectMessages />} />
+              <Route path="mensagens/:recipientId" element={<DirectMessageChat />} />
+              <Route path="avisos" element={<MemberBroadcasts />} />
+            </Route>
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

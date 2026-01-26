@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,15 +6,31 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
 
 const Login = () => {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const checkAndRedirect = async () => {
+      if (user) {
+        const { data: isAdmin } = await supabase.rpc("has_any_admin_role", { _user_id: user.id });
+        if (isAdmin) {
+          navigate("/admin");
+        } else {
+          navigate("/membro");
+        }
+      }
+    };
+    checkAndRedirect();
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +44,14 @@ const Login = () => {
         description: error.message,
         variant: "destructive",
       });
+      setLoading(false);
     } else {
       toast({
         title: "Login realizado com sucesso!",
-        description: "Redirecionando para o painel...",
+        description: "Redirecionando...",
       });
-      navigate("/admin");
+      // The redirect will be handled by the useEffect above
     }
-
-    setLoading(false);
   };
 
   return (
@@ -46,9 +61,9 @@ const Login = () => {
           <div className="flex justify-center mb-4">
             <Logo size="lg" />
           </div>
-          <CardTitle className="text-2xl font-display">Painel Administrativo</CardTitle>
+          <CardTitle className="text-2xl font-display">Entrar</CardTitle>
           <CardDescription>
-            Faça login para gerenciar o site da igreja
+            Faça login para acessar sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,8 +110,14 @@ const Login = () => {
               )}
             </Button>
           </form>
-          <div className="mt-6 text-center">
-            <Link to="/" className="text-sm text-muted-foreground hover:text-primary">
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Não tem uma conta?{" "}
+              <Link to="/cadastro" className="text-primary hover:underline font-medium">
+                Cadastre-se
+              </Link>
+            </p>
+            <Link to="/" className="text-sm text-muted-foreground hover:text-primary block">
               ← Voltar para o site
             </Link>
           </div>

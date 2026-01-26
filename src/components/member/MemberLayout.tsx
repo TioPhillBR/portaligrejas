@@ -1,21 +1,17 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
-  Clock,
-  Calendar,
+  Home,
+  User,
   Users,
-  Image,
-  Video,
-  Radio,
-  MessageSquare,
-  Heart,
+  MessageCircle,
+  Bell,
   Settings,
   LogOut,
   Menu,
   X,
   ChevronRight,
-  Shield,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,25 +19,23 @@ import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
-  { icon: Clock, label: "Horários de Culto", href: "/admin/horarios" },
-  { icon: Calendar, label: "Eventos", href: "/admin/eventos" },
-  { icon: Users, label: "Ministérios", href: "/admin/ministerios" },
-  { icon: Image, label: "Galeria", href: "/admin/galeria" },
-  { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
-  { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
-  { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },
-  { icon: Settings, label: "Configurações", href: "/admin/configuracoes" },
-  { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
+  { icon: Home, label: "Início", href: "/membro" },
+  { icon: User, label: "Meu Perfil", href: "/membro/perfil" },
+  { icon: Users, label: "Ministérios", href: "/membro/ministerios" },
+  { icon: MessageCircle, label: "Grupos", href: "/membro/grupos" },
+  { icon: Send, label: "Mensagens", href: "/membro/mensagens" },
+  { icon: Bell, label: "Avisos", href: "/membro/avisos" },
 ];
 
-const AdminLayout = () => {
+const MemberLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,9 +43,19 @@ const AdminLayout = () => {
     }
   }, [user, loading, navigate]);
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const { data } = await supabase.rpc("has_any_admin_role", { _user_id: user.id });
+        setIsAdmin(!!data);
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
+
   const handleSignOut = async () => {
     await signOut();
-    navigate("/login");
+    navigate("/");
   };
 
   if (loading) {
@@ -126,6 +130,16 @@ const AdminLayout = () => {
 
           {/* Sidebar Footer */}
           <div className="p-4 border-t border-border space-y-2">
+            {isAdmin && (
+              <Button
+                variant="outline"
+                className="w-full gap-2 mb-2"
+                onClick={() => navigate("/admin")}
+              >
+                <Settings className="w-4 h-4" />
+                Painel Admin
+              </Button>
+            )}
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground truncate">
                 {user.email}
@@ -168,4 +182,4 @@ const AdminLayout = () => {
   );
 };
 
-export default AdminLayout;
+export default MemberLayout;

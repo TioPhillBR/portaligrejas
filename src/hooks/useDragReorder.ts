@@ -11,11 +11,13 @@ export function useDragReorder<T extends { id: string; sort_order: number }>({
 }: UseDragReorderOptions<T>) {
   const [draggedItem, setDraggedItem] = useState<T | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const [droppedItemId, setDroppedItemId] = useState<string | null>(null);
 
   const handleDragStart = useCallback(
     (e: React.DragEvent, item: T) => {
       e.dataTransfer.effectAllowed = "move";
       setDraggedItem(item);
+      setDroppedItemId(null);
     },
     []
   );
@@ -56,10 +58,17 @@ export function useDragReorder<T extends { id: string; sort_order: number }>({
         sort_order: index,
       }));
 
+      // Set the dropped item for animation
+      setDroppedItemId(draggedItem.id);
       setDraggedItem(null);
       setDragOverIndex(null);
 
       await onReorder(reorderedItems);
+
+      // Clear dropped animation after it completes
+      setTimeout(() => {
+        setDroppedItemId(null);
+      }, 400);
     },
     [draggedItem, items, onReorder]
   );
@@ -72,6 +81,7 @@ export function useDragReorder<T extends { id: string; sort_order: number }>({
   return {
     draggedItem,
     dragOverIndex,
+    droppedItemId,
     handleDragStart,
     handleDragOver,
     handleDragLeave,

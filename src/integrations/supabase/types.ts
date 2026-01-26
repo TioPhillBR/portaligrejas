@@ -14,6 +14,83 @@ export type Database = {
   }
   public: {
     Tables: {
+      broadcast_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          media_url: string | null
+          message_type: string
+          sender_id: string
+          target_type: string
+          target_value: string | null
+          title: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          message_type?: string
+          sender_id: string
+          target_type: string
+          target_value?: string | null
+          title?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          media_url?: string | null
+          message_type?: string
+          sender_id?: string
+          target_type?: string
+          target_value?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_announcement: boolean | null
+          media_url: string | null
+          message_type: string
+          ministry_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_announcement?: boolean | null
+          media_url?: string | null
+          message_type?: string
+          ministry_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_announcement?: boolean | null
+          media_url?: string | null
+          message_type?: string
+          ministry_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_ministry_id_fkey"
+            columns: ["ministry_id"]
+            isOneToOne: false
+            referencedRelation: "ministries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -44,6 +121,39 @@ export type Database = {
           message?: string
           name?: string
           phone?: string | null
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          is_read: boolean | null
+          media_url: string | null
+          message_type: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          media_url?: string | null
+          message_type?: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          media_url?: string | null
+          message_type?: string
+          recipient_id?: string
+          sender_id?: string
         }
         Relationships: []
       }
@@ -176,6 +286,38 @@ export type Database = {
         }
         Relationships: []
       }
+      ministry_members: {
+        Row: {
+          id: string
+          is_active: boolean | null
+          joined_at: string
+          ministry_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          ministry_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_active?: boolean | null
+          joined_at?: string
+          ministry_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ministry_members_ministry_id_fkey"
+            columns: ["ministry_id"]
+            isOneToOne: false
+            referencedRelation: "ministries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayer_requests: {
         Row: {
           created_at: string
@@ -203,25 +345,40 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          birth_date: string | null
           created_at: string
           full_name: string | null
+          gender: string | null
           id: string
+          is_public_member: boolean | null
+          phone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
           created_at?: string
           full_name?: string | null
+          gender?: string | null
           id?: string
+          is_public_member?: boolean | null
+          phone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          birth_date?: string | null
           created_at?: string
           full_name?: string | null
+          gender?: string | null
           id?: string
+          is_public_member?: boolean | null
+          phone?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -319,6 +476,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_age_range: { Args: { birth_date: string }; Returns: string }
       has_any_admin_role: { Args: { _user_id: string }; Returns: boolean }
       has_role: {
         Args: {

@@ -62,6 +62,7 @@ const AdminSchedules = () => {
   const {
     draggedItem,
     dragOverIndex,
+    droppedItemId,
     handleDragStart,
     handleDragOver,
     handleDragLeave,
@@ -247,9 +248,11 @@ const AdminSchedules = () => {
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
-                  className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-all duration-200 ${
-                    draggedItem?.id === schedule.id ? "opacity-50 bg-muted" : ""
-                  } ${dragOverIndex === index ? "ring-2 ring-primary ring-inset" : ""}`}
+                  className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-all duration-200 cursor-grab active:cursor-grabbing ${
+                    draggedItem?.id === schedule.id ? "opacity-50 bg-muted rotate-1" : ""
+                  } ${dragOverIndex === index && draggedItem?.id !== schedule.id ? "ring-2 ring-primary ring-inset translate-y-1" : ""} ${
+                    droppedItemId === schedule.id ? "animate-drop-success" : ""
+                  }`}
                 >
                   <GripVertical className="w-5 h-5 text-muted-foreground cursor-grab active:cursor-grabbing" />
                   <div className="flex-1">

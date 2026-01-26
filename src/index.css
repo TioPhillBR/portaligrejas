@@ -233,4 +233,56 @@
       box-shadow: 0 0 0 10px hsl(43 74% 52% / 0);
     }
   }
+
+  /* Drag and Drop Animations */
+  .animate-drop-success {
+    animation: dropSuccess 0.4s ease-out forwards;
+  }
+
+  @keyframes dropSuccess {
+    0% {
+      transform: scale(0.95);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.5);
+    }
+    50% {
+      transform: scale(1.02);
+      box-shadow: 0 0 0 8px hsl(var(--primary) / 0.2);
+    }
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0);
+    }
+  }
+
+  .animate-drag-over {
+    animation: dragOver 0.2s ease-out forwards;
+  }
+
+  @keyframes dragOver {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(4px);
+    }
+  }
+
+  .drag-placeholder {
+    @apply relative;
+  }
+
+  .drag-placeholder::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg border-2 border-dashed border-primary/50 bg-primary/5;
+    animation: placeholderPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes placeholderPulse {
+    0%, 100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
