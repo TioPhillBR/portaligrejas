@@ -22,6 +22,7 @@ import AdminBroadcast from "./pages/admin/Broadcast";
 import AdminBlog from "./pages/admin/Blog";
 import AdminBlogStats from "./pages/admin/BlogStats";
 import AdminBlogCategories from "./pages/admin/BlogCategories";
+import AdminBlogTags from "./pages/admin/BlogTags";
 import AdminComments from "./pages/admin/Comments";
 import AdminHomeSections from "./pages/admin/HomeSections";
 import EventDetails from "./pages/EventDetails";
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="blog" element={<AdminBlog />} />
               <Route path="blog/estatisticas" element={<AdminBlogStats />} />
               <Route path="blog/categorias" element={<AdminBlogCategories />} />
+              <Route path="blog/tags" element={<AdminBlogTags />} />
               <Route path="comentarios" element={<AdminComments />} />
             </Route>
             

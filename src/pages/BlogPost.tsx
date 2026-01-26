@@ -2,7 +2,7 @@ import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar, Clock, ArrowLeft, Share2, BookOpen } from "lucide-react";
+import { Calendar, Clock, ArrowLeft, Share2, BookOpen, Tag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlogComments from "@/components/blog/BlogComments";
 import BlogLikeButton from "@/components/blog/BlogLikeButton";
+
+interface BlogTag {
+  id: string;
+  name: string;
+  slug: string;
+  color: string;
+}
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -31,6 +38,36 @@ const BlogPost = () => {
     },
     enabled: !!slug,
   });
+
+  const { data: tags } = useQuery({
+    queryKey: ["blog-tags-all"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_tags")
+        .select("id, name, slug, color")
+        .order("name");
+      if (error) throw error;
+      return data as BlogTag[];
+    },
+  });
+
+  const { data: postTags } = useQuery({
+    queryKey: ["blog-post-tags", post?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("blog_post_tags")
+        .select("tag_id")
+        .eq("post_id", post!.id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!post?.id,
+  });
+
+  const getPostTags = () => {
+    const tagIds = postTags?.map((pt) => pt.tag_id) || [];
+    return tags?.filter((tag) => tagIds.includes(tag.id)) || [];
+  };
 
   const { data: relatedPosts } = useQuery({
     queryKey: ["related-posts", post?.category, post?.id],
@@ -179,6 +216,21 @@ const BlogPost = () => {
                 </Button>
               </div>
             </div>
+            {/* Tags */}
+            {getPostTags().length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                {getPostTags().map((tag) => (
+                  <Badge
+                    key={tag.id}
+                    variant="outline"
+                    style={{ borderColor: tag.color, color: tag.color }}
+                  >
+                    {tag.name}
+                  </Badge>
+                ))}
+              </div>
+            )}
           </header>
 
           <Separator className="mb-8" />
