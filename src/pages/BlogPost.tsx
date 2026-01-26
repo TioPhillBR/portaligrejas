@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlogComments from "@/components/blog/BlogComments";
+import BlogLikeButton from "@/components/blog/BlogLikeButton";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -166,15 +167,17 @@ const BlogPost = () => {
                 <Clock className="h-4 w-4" />
                 {estimateReadTime(post.content)} min de leitura
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleShare}
-                className="ml-auto"
-              >
-                <Share2 className="h-4 w-4 mr-2" />
-                Compartilhar
-              </Button>
+              <div className="flex items-center gap-2 ml-auto">
+                <BlogLikeButton postId={post.id} />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleShare}
+                >
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Compartilhar
+                </Button>
+              </div>
             </div>
           </header>
 
@@ -197,12 +200,15 @@ const BlogPost = () => {
           <div className="bg-card rounded-xl p-6 border text-center mb-12">
             <h3 className="font-semibold mb-2">Gostou deste artigo?</h3>
             <p className="text-muted-foreground mb-4">
-              Compartilhe com seus amigos e familiares!
+              Curta e compartilhe com seus amigos!
             </p>
-            <Button onClick={handleShare}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Compartilhar
-            </Button>
+            <div className="flex items-center justify-center gap-3">
+              <BlogLikeButton postId={post.id} />
+              <Button onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Compartilhar
+              </Button>
+            </div>
           </div>
 
           {/* Related Posts */}

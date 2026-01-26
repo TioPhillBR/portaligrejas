@@ -20,6 +20,8 @@ import AdminMessages from "./pages/admin/Messages";
 import AdminUsers from "./pages/admin/Users";
 import AdminBroadcast from "./pages/admin/Broadcast";
 import AdminBlog from "./pages/admin/Blog";
+import AdminComments from "./pages/admin/Comments";
+import AdminHomeSections from "./pages/admin/HomeSections";
 import EventDetails from "./pages/EventDetails";
 import MinistryDetails from "./pages/MinistryDetails";
 import Blog from "./pages/Blog";
@@ -59,6 +61,7 @@ const App = () => (
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminDashboard />} />
+              <Route path="secoes" element={<AdminHomeSections />} />
               <Route path="horarios" element={<AdminSchedules />} />
               <Route path="eventos" element={<AdminEvents />} />
               <Route path="ministerios" element={<AdminMinistries />} />
@@ -69,6 +72,7 @@ const App = () => (
               <Route path="usuarios" element={<AdminUsers />} />
               <Route path="comunicacao" element={<AdminBroadcast />} />
               <Route path="blog" element={<AdminBlog />} />
+              <Route path="comentarios" element={<AdminComments />} />
             </Route>
             
             {/* Member Routes */}

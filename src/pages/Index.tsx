@@ -13,24 +13,64 @@ import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import { useHomeSections } from "@/hooks/useHomeSections";
+
+// Map section keys to components
+const sectionComponents: Record<string, React.ComponentType<{ sectionData?: any }>> = {
+  hero: HeroSection,
+  services: ServiceScheduleSection,
+  events: EventsSection,
+  ministries: MinistriesSection,
+  about: AboutSection,
+  gallery: GallerySection,
+  video: VideoSection,
+  radio: WebRadioSection,
+  donations: DonationsSection,
+  prayer: PrayerRequestSection,
+  contact: ContactSection,
+};
 
 const Index = () => {
+  const { data: sections, isLoading } = useHomeSections();
+
+  // Default order if sections are not loaded yet
+  const defaultOrder = [
+    "hero",
+    "services",
+    "events",
+    "ministries",
+    "about",
+    "gallery",
+    "video",
+    "radio",
+    "donations",
+    "prayer",
+    "contact",
+  ];
+
+  const orderedSections = sections?.length
+    ? sections.filter((s) => sectionComponents[s.section_key])
+    : defaultOrder.map((key) => ({ section_key: key, title: null, subtitle: null, content: {} }));
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <main>
-        <HeroSection />
-        <ServiceScheduleSection />
-        <EventsSection />
-        <MinistriesSection />
-        <AboutSection />
-        <GallerySection />
-        <VideoSection />
-        <WebRadioSection />
-        <DonationsSection />
-        <PrayerRequestSection />
-        <ContactSection />
+        {orderedSections.map((section) => {
+          const Component = sectionComponents[section.section_key];
+          if (!Component) return null;
+          return (
+            <Component
+              key={section.section_key}
+              sectionData={{
+                title: section.title,
+                subtitle: section.subtitle,
+                content: section.content,
+              }}
+            />
+          );
+        })}
       </main>
       
       <Footer />

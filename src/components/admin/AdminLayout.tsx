@@ -17,6 +17,8 @@ import {
   Shield,
   FileText,
   ExternalLink,
+  Home,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,11 +29,13 @@ import { cn } from "@/lib/utils";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: Home, label: "Seções da Home", href: "/admin/secoes" },
   { icon: Clock, label: "Horários de Culto", href: "/admin/horarios" },
   { icon: Calendar, label: "Eventos", href: "/admin/eventos" },
   { icon: Users, label: "Ministérios", href: "/admin/ministerios" },
   { icon: Image, label: "Galeria", href: "/admin/galeria" },
   { icon: FileText, label: "Blog", href: "/admin/blog" },
+  { icon: MessageCircle, label: "Comentários", href: "/admin/comentarios" },
   { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
   { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
   { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },

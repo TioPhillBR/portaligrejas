@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MessageSquare, Send, Trash2, User } from "lucide-react";
+import { MessageSquare, Send, Trash2, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +23,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Link } from "react-router-dom";
+import CommentLikeButton from "./CommentLikeButton";
+import { cn } from "@/lib/utils";
 
 interface BlogCommentsProps {
   postId: string;
@@ -31,6 +34,7 @@ interface Comment {
   id: string;
   content: string;
   user_id: string;
+  is_approved: boolean;
   created_at: string;
   profile?: {
     full_name: string | null;
@@ -46,17 +50,22 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
   const { data: comments, isLoading } = useQuery({
     queryKey: ["blog-comments", postId],
     queryFn: async () => {
+      // Fetch comments - show approved ones OR user's own pending comments
       const { data, error } = await supabase
         .from("blog_comments")
         .select("*")
         .eq("post_id", postId)
-        .eq("is_approved", true)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
 
+      // Filter: show approved OR user's own pending
+      const filteredData = data.filter(
+        (c) => c.is_approved || (user && c.user_id === user.id)
+      );
+
       // Fetch profiles for each comment
-      const userIds = [...new Set(data.map((c) => c.user_id))];
+      const userIds = [...new Set(filteredData.map((c) => c.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
@@ -64,7 +73,7 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
 
       const profileMap = new Map(profiles?.map((p) => [p.user_id, p]));
 
-      return data.map((comment) => ({
+      return filteredData.map((comment) => ({
         ...comment,
         profile: profileMap.get(comment.user_id),
       })) as Comment[];
@@ -83,7 +92,7 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["blog-comments", postId] });
       setNewComment("");
-      toast.success("Comentário publicado!");
+      toast.success("Comentário enviado! Aguardando aprovação.");
     },
     onError: () => toast.error("Erro ao publicar comentário"),
   });
@@ -182,7 +191,10 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
           {comments?.map((comment) => (
             <div
               key={comment.id}
-              className="flex gap-4 p-4 bg-card rounded-lg border"
+              className={cn(
+                "flex gap-4 p-4 bg-card rounded-lg border",
+                !comment.is_approved && "opacity-70 border-dashed"
+              )}
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage src={comment.profile?.avatar_url || undefined} />
@@ -192,15 +204,21 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <div>
+                  <div className="flex items-center gap-2">
                     <span className="font-medium">
                       {comment.profile?.full_name || "Usuário"}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-2">
+                    <span className="text-sm text-muted-foreground">
                       {format(new Date(comment.created_at), "d 'de' MMM 'às' HH:mm", {
                         locale: ptBR,
                       })}
                     </span>
+                    {!comment.is_approved && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Clock className="h-3 w-3" />
+                        Pendente
+                      </Badge>
+                    )}
                   </div>
                   {user?.id === comment.user_id && (
                     <AlertDialog>
@@ -228,9 +246,12 @@ const BlogComments = ({ postId }: BlogCommentsProps) => {
                     </AlertDialog>
                   )}
                 </div>
-                <p className="text-foreground whitespace-pre-wrap">
+                <p className="text-foreground whitespace-pre-wrap mb-2">
                   {comment.content}
                 </p>
+                {comment.is_approved && (
+                  <CommentLikeButton commentId={comment.id} />
+                )}
               </div>
             </div>
           ))}
