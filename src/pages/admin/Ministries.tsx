@@ -82,6 +82,7 @@ const AdminMinistries = () => {
   const {
     draggedItem,
     dragOverIndex,
+    droppedItemId,
     handleDragStart,
     handleDragOver,
     handleDragLeave,
@@ -307,11 +308,11 @@ const AdminMinistries = () => {
               onDragLeave={handleDragLeave}
               onDrop={(e) => handleDrop(e, index)}
               onDragEnd={handleDragEnd}
-              className={`transition-all duration-200 ${
+              className={`transition-all duration-200 cursor-grab active:cursor-grabbing ${
                 !ministry.is_active ? "opacity-50" : ""
-              } ${draggedItem?.id === ministry.id ? "opacity-50 scale-95" : ""} ${
-                dragOverIndex === index ? "ring-2 ring-primary ring-offset-2" : ""
-              }`}
+              } ${draggedItem?.id === ministry.id ? "opacity-50 scale-95 rotate-1" : ""} ${
+                dragOverIndex === index && draggedItem?.id !== ministry.id ? "ring-2 ring-primary ring-offset-2 translate-y-1" : ""
+              } ${droppedItemId === ministry.id ? "animate-drop-success" : ""}`}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
