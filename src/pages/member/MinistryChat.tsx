@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Smile, Image, Mic, Video, MoreVertical } from "lucide-react";
+import { ArrowLeft, Send, Smile, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import AudioRecorder from "@/components/chat/AudioRecorder";
+import AudioPlayer from "@/components/chat/AudioPlayer";
 
 interface Message {
   id: string;
@@ -171,6 +173,17 @@ const MinistryChat = () => {
     }
   };
 
+  const handleSendAudio = async (audioUrl: string) => {
+    if (!user || !ministryId) return;
+
+    await supabase.from("chat_messages").insert({
+      ministry_id: ministryId,
+      sender_id: user.id,
+      message_type: "audio",
+      media_url: audioUrl,
+    });
+  };
+
   const addEmoji = (emoji: string) => {
     setNewMessage((prev) => prev + emoji);
   };
@@ -242,6 +255,12 @@ const MinistryChat = () => {
                       src={message.media_url}
                       alt="Imagem"
                       className="rounded-lg max-w-full mb-1"
+                    />
+                  )}
+                  {message.message_type === "audio" && message.media_url && (
+                    <AudioPlayer 
+                      src={message.media_url} 
+                      isOwn={isOwnMessage(message.sender_id)} 
                     />
                   )}
                   {message.content && <p className="break-words">{message.content}</p>}
@@ -321,6 +340,9 @@ const MinistryChat = () => {
               </span>
             </Button>
           </label>
+
+          {/* Audio Recorder */}
+          <AudioRecorder onSendAudio={handleSendAudio} disabled={sending} />
 
           {/* Message Input */}
           <Input
