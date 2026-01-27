@@ -26,6 +26,11 @@ import BlogPost from "./pages/BlogPost";
 // Churches list
 import ChurchesList from "./pages/ChurchesList";
 
+// Checkout pages
+import Checkout from "./pages/Checkout";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
+import Pricing from "./pages/Pricing";
+
 // Admin components
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -100,6 +105,9 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/criar-igreja" element={<CreateChurch />} />
               <Route path="/igrejas" element={<ChurchesList />} />
+              <Route path="/planos" element={<Pricing />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/checkout/sucesso" element={<CheckoutSuccess />} />
               
               {/* ===== AUTH PAGES ===== */}
               <Route path="/login" element={<Login />} />
