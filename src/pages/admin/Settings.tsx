@@ -35,6 +35,7 @@ interface SiteSettings {
     pix_key: string;
     pix_type: string;
     pix_image_url: string;
+    pix_copy_paste: string;
     bank_name: string;
     bank_code: string;
     agency: string;
@@ -49,7 +50,7 @@ const defaultSettings: SiteSettings = {
   social: { facebook: "", instagram: "", youtube: "" },
   radio: { stream_url: "", name: "" },
   video: { youtube_id: "", title: "" },
-  donations: { pix_key: "", pix_type: "email", pix_image_url: "", bank_name: "", bank_code: "", agency: "", account: "", holder: "", cnpj: "" },
+  donations: { pix_key: "", pix_type: "email", pix_image_url: "", pix_copy_paste: "", bank_name: "", bank_code: "", agency: "", account: "", holder: "", cnpj: "" },
 };
 
 const AdminSettings = () => {
@@ -325,6 +326,17 @@ const AdminSettings = () => {
                       onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_type: e.target.value } })}
                     />
                   </div>
+                </div>
+                <div className="mt-4">
+                  <Label>PIX Copia e Cola</Label>
+                  <Input
+                    value={settings.donations.pix_copy_paste}
+                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, pix_copy_paste: e.target.value } })}
+                    placeholder="Cole aqui o código PIX copia e cola completo"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Código PIX gerado pelo seu banco para pagamentos instantâneos
+                  </p>
                 </div>
               </div>
 
