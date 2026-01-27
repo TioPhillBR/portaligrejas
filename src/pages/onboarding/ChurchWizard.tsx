@@ -12,6 +12,7 @@ import WizardStepIndicator from "@/components/onboarding/WizardStepIndicator";
 import WizardStepAuth from "@/components/onboarding/WizardStepAuth";
 import WizardStepPlan from "@/components/onboarding/WizardStepPlan";
 import WizardStepChurch from "@/components/onboarding/WizardStepChurch";
+import WizardStepCheckout from "@/components/onboarding/WizardStepCheckout";
 
 export interface ChurchFormData {
   churchName: string;
@@ -72,12 +73,31 @@ const ChurchWizard = () => {
     confirmPassword: "",
   });
 
-  // Persist church data on change
+  // Persist data on change
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ churchData, selectedPlan }));
-  }, [churchData, selectedPlan]);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+      churchData, 
+      selectedPlan,
+      currentStep: user ? currentStep : currentStep 
+    }));
+  }, [churchData, selectedPlan, currentStep, user]);
 
-  // If user is logged in, skip auth step
+  // Handle recovery mode (user coming back from failed payment)
+  useEffect(() => {
+    const isRecovery = searchParams.get("recovery") === "true";
+    const pendingChurchId = localStorage.getItem("pending_church_id");
+    
+    if (isRecovery && pendingChurchId && user) {
+      // User is returning from cancelled payment, stay on checkout step
+      const savedPlan = localStorage.getItem("pending_plan");
+      if (savedPlan) {
+        setSelectedPlan(savedPlan);
+        setCurrentStep(3); // Checkout step
+      }
+    }
+  }, [searchParams, user]);
+
+  // If user is logged in, skip auth step and go to plan selection
   useEffect(() => {
     if (!authLoading && user) {
       if (currentStep === 1) {
@@ -86,6 +106,14 @@ const ChurchWizard = () => {
       checkFreeAccount(user.email);
     }
   }, [user, authLoading]);
+
+  // Check URL for slug param
+  useEffect(() => {
+    const slugParam = searchParams.get("slug");
+    if (slugParam && !churchData.slug) {
+      setChurchData(prev => ({ ...prev, slug: slugParam }));
+    }
+  }, [searchParams]);
 
   // Check URL for plan param
   useEffect(() => {
@@ -119,7 +147,6 @@ const ChurchWizard = () => {
   };
 
   const handleAuthSubmit = async (data: AuthFormData) => {
-    // Validate passwords match
     if (data.userPassword !== data.confirmPassword) {
       toast.error("As senhas não coincidem");
       return;
@@ -162,7 +189,18 @@ const ChurchWizard = () => {
 
   const handlePlanSelect = (plan: string) => {
     setSelectedPlan(plan);
-    setCurrentStep(3);
+    
+    // If it's a granted free account, go directly to church creation
+    if (grantedAccount?.hasGrantedAccount) {
+      setCurrentStep(4); // Church data step
+    } else {
+      setCurrentStep(3); // Checkout step
+    }
+  };
+
+  const handleCheckoutSuccess = (churchId: string) => {
+    // This is called when returning from successful payment
+    // The CheckoutSuccess page handles this flow
   };
 
   const handleChurchSubmit = async (data: ChurchFormData) => {
@@ -172,16 +210,15 @@ const ChurchWizard = () => {
       return;
     }
 
-    if (!selectedPlan && !grantedAccount?.hasGrantedAccount) {
-      toast.error("Selecione um plano");
-      setCurrentStep(2);
+    if (!grantedAccount?.hasGrantedAccount) {
+      toast.error("Erro no fluxo de pagamento");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Create church
+      // Create church for free account
       const { data: churchId, error: churchError } = await supabase.rpc(
         "create_church_with_defaults",
         {
@@ -201,39 +238,46 @@ const ChurchWizard = () => {
         throw churchError;
       }
 
-      // Check and activate free account if available
-      if (grantedAccount?.hasGrantedAccount) {
-        try {
-          await fetch(
-            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-free-account`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: user.email,
-                churchId,
-                churchName: data.churchName,
-              }),
-            }
-          );
-          toast.success(`Conta gratuita ativada! Plano ${grantedAccount.plan?.toUpperCase()}`);
-        } catch (error) {
-          console.error("Error activating free account:", error);
-        }
+      // Update church with granted plan
+      await supabase
+        .from("churches")
+        .update({ 
+          status: "active",
+          plan: grantedAccount.plan,
+        })
+        .eq("id", churchId);
+
+      // Activate free account
+      try {
+        await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-free-account`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              churchId,
+              churchName: data.churchName,
+            }),
+          }
+        );
+      } catch (error) {
+        console.error("Error activating free account:", error);
       }
+
+      // Add church_owner role
+      await supabase.from("user_roles").upsert({
+        user_id: user.id,
+        role: "church_owner",
+      }, { onConflict: "user_id,role" });
 
       // Clear saved data
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem("pending_church_id");
+      localStorage.removeItem("pending_plan");
 
-      // If paid plan and not free account, redirect to checkout
-      if (selectedPlan && selectedPlan !== "free" && !grantedAccount?.hasGrantedAccount) {
-        toast.success("Igreja criada! Redirecionando para pagamento...");
-        navigate(`/checkout?church=${churchId}&plan=${selectedPlan}`);
-      } else {
-        toast.success("Igreja criada com sucesso!");
-        // Redirect to onboarding tutorial
-        navigate(`/onboarding/${data.slug}`);
-      }
+      toast.success(`Igreja criada com plano ${grantedAccount.plan?.toUpperCase()} gratuito!`);
+      navigate(`/onboarding/${data.slug}`);
     } catch (error: any) {
       console.error("Error creating church:", error);
       toast.error(error.message || "Erro ao criar igreja");
@@ -243,13 +287,40 @@ const ChurchWizard = () => {
   };
 
   const handleLogin = () => {
-    // Save current data and redirect to login with return URL
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ churchData, selectedPlan }));
-    navigate("/login?redirect=/criar-igreja/wizard");
+    const slug = churchData.slug ? `&slug=${churchData.slug}` : "";
+    navigate(`/login?redirect=/criar-igreja/wizard${slug}`);
   };
 
-  const totalSteps = user ? 2 : 3;
-  const adjustedStep = user ? currentStep - 1 : currentStep;
+  // Calculate steps based on user state and flow
+  // Logged in: Plan -> Checkout -> (webhook activates) -> Admin
+  // Not logged in: Auth -> Plan -> Checkout -> (webhook activates) -> Admin
+  // Free account: Auth/Skip -> Plan -> Church Data -> Admin
+  
+  const getSteps = () => {
+    if (grantedAccount?.hasGrantedAccount) {
+      return user 
+        ? ["Escolha o Plano", "Dados da Igreja"]
+        : ["Criar Conta", "Escolha o Plano", "Dados da Igreja"];
+    }
+    return user 
+      ? ["Escolha o Plano", "Pagamento"]
+      : ["Criar Conta", "Escolha o Plano", "Pagamento"];
+  };
+
+  const steps = getSteps();
+  const totalSteps = steps.length;
+  
+  // Adjust display step based on whether user is logged in
+  const getDisplayStep = () => {
+    if (user) {
+      // Logged in: step 2 = plan, step 3 = checkout/church
+      return currentStep - 1;
+    }
+    return currentStep;
+  };
+
+  const displayStep = getDisplayStep();
 
   return (
     <PageTransition>
@@ -277,15 +348,12 @@ const ChurchWizard = () => {
           <div className="max-w-2xl mx-auto">
             {/* Step Indicator */}
             <WizardStepIndicator
-              currentStep={adjustedStep}
+              currentStep={displayStep}
               totalSteps={totalSteps}
-              steps={user 
-                ? ["Escolha o Plano", "Dados da Igreja"]
-                : ["Criar Conta", "Escolha o Plano", "Dados da Igreja"]
-              }
+              steps={steps}
             />
 
-            {/* Step Content */}
+            {/* Step 1: Auth (only for non-logged users) */}
             {currentStep === 1 && !user && (
               <WizardStepAuth
                 onSubmit={handleAuthSubmit}
@@ -294,6 +362,7 @@ const ChurchWizard = () => {
               />
             )}
 
+            {/* Step 2: Plan Selection */}
             {currentStep === 2 && (
               <WizardStepPlan
                 selectedPlan={selectedPlan}
@@ -304,7 +373,20 @@ const ChurchWizard = () => {
               />
             )}
 
-            {currentStep === 3 && (
+            {/* Step 3: Checkout (for paid plans) */}
+            {currentStep === 3 && selectedPlan && !grantedAccount?.hasGrantedAccount && (
+              <WizardStepCheckout
+                selectedPlan={selectedPlan}
+                churchData={churchData}
+                userEmail={user?.email || authData.userEmail}
+                userName={authData.userName}
+                onBack={() => setCurrentStep(2)}
+                onSuccess={handleCheckoutSuccess}
+              />
+            )}
+
+            {/* Step 4: Church Data (only for free accounts) */}
+            {(currentStep === 4 || (currentStep === 3 && grantedAccount?.hasGrantedAccount)) && (
               <WizardStepChurch
                 data={churchData}
                 onChange={setChurchData}

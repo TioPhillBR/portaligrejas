@@ -8,63 +8,39 @@ const corsHeaders = {
 interface OwnerInfo {
   email: string;
   name: string;
+  userId: string;
 }
 
 async function getOwnerInfo(supabase: any, churchId: string): Promise<OwnerInfo | null> {
   try {
-    // 1. Try church email first
+    // Get church data
     const { data: church } = await supabase
       .from("churches")
       .select("email, name, owner_id")
       .eq("id", churchId)
       .single();
 
-    if (church?.email) {
-      return { email: church.email, name: church.name };
+    if (!church?.owner_id) {
+      console.log("No owner_id found for church");
+      return null;
     }
 
-    // 2. Find owner via church_members
-    const { data: owner } = await supabase
-      .from("church_members")
-      .select("user_id")
-      .eq("church_id", churchId)
-      .eq("role", "owner")
+    // Get profile name
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", church.owner_id)
       .single();
 
-    if (owner?.user_id) {
-      // Get profile name
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", owner.user_id)
-        .single();
+    // Get email via admin API
+    const { data: { user } } = await supabase.auth.admin.getUserById(church.owner_id);
 
-      // Get email via admin API
-      const { data: { user } } = await supabase.auth.admin.getUserById(owner.user_id);
-      
-      if (user?.email) {
-        return { 
-          email: user.email, 
-          name: profile?.full_name || church?.name || "Administrador" 
-        };
-      }
-    }
-
-    // 3. Try owner_id from church
-    if (church?.owner_id) {
-      const { data: { user } } = await supabase.auth.admin.getUserById(church.owner_id);
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", church.owner_id)
-        .single();
-
-      if (user?.email) {
-        return { 
-          email: user.email, 
-          name: profile?.full_name || church?.name || "Administrador" 
-        };
-      }
+    if (user?.email) {
+      return {
+        email: church.email || user.email,
+        name: profile?.full_name || church?.name || "Administrador",
+        userId: church.owner_id,
+      };
     }
 
     return null;
@@ -75,15 +51,15 @@ async function getOwnerInfo(supabase: any, churchId: string): Promise<OwnerInfo 
 }
 
 async function sendPaymentEmail(
-  type: string, 
-  ownerInfo: OwnerInfo, 
-  churchName: string, 
+  type: string,
+  ownerInfo: OwnerInfo,
+  churchName: string,
   planName?: string,
   daysOverdue?: number
 ) {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    
+
     const response = await fetch(`${supabaseUrl}/functions/v1/send-payment-email`, {
       method: "POST",
       headers: {
@@ -105,8 +81,82 @@ async function sendPaymentEmail(
     return result;
   } catch (error) {
     console.error(`Failed to send ${type} email:`, error);
-    // Don't throw - email failure shouldn't block webhook processing
     return null;
+  }
+}
+
+async function sendPushNotification(
+  supabase: any,
+  churchId: string,
+  title: string,
+  body: string
+) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+
+    await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+      },
+      body: JSON.stringify({
+        title,
+        body,
+        church_id: churchId,
+        target_admins: true,
+      }),
+    });
+
+    console.log(`Push notification sent for church ${churchId}`);
+  } catch (error) {
+    console.error("Failed to send push notification:", error);
+  }
+}
+
+async function assignChurchOwnerRole(supabase: any, userId: string) {
+  try {
+    // Check if role already exists
+    const { data: existingRole } = await supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("role", "church_owner")
+      .single();
+
+    if (!existingRole) {
+      await supabase.from("user_roles").insert({
+        user_id: userId,
+        role: "church_owner",
+      });
+      console.log(`church_owner role assigned to user ${userId}`);
+    } else {
+      console.log(`User ${userId} already has church_owner role`);
+    }
+  } catch (error) {
+    console.error("Error assigning church_owner role:", error);
+  }
+}
+
+async function recordSubscriptionHistory(
+  supabase: any,
+  churchId: string,
+  changeType: string,
+  oldPlan: string | null,
+  newPlan: string,
+  mrrChange: number
+) {
+  try {
+    await supabase.from("subscription_history").insert({
+      church_id: churchId,
+      change_type: changeType,
+      old_plan: oldPlan,
+      new_plan: newPlan,
+      mrr_change: mrrChange,
+    });
+    console.log(`Subscription history recorded: ${changeType}`);
+  } catch (error) {
+    console.error("Error recording subscription history:", error);
   }
 }
 
@@ -139,7 +189,7 @@ Deno.serve(async (req) => {
     // Get church data
     const { data: church } = await supabase
       .from("churches")
-      .select("id, name, email, plan, pending_plan, payment_overdue_at, status")
+      .select("id, name, email, plan, status, owner_id, payment_overdue_at")
       .eq("id", churchId)
       .single();
 
@@ -152,21 +202,17 @@ Deno.serve(async (req) => {
     }
 
     const ownerInfo = await getOwnerInfo(supabase, churchId);
+    const wasActivation = church.status === "pending_payment";
 
     // Handle payment confirmation events
     if (event === "PAYMENT_CONFIRMED" || event === "PAYMENT_RECEIVED") {
       console.log(`Payment confirmed for church ${churchId}`);
 
+      const previousPlan = church.plan;
       const updateData: any = {
         status: "active",
         payment_overdue_at: null,
       };
-
-      // Apply pending plan if exists
-      if (church.pending_plan) {
-        updateData.plan = church.pending_plan;
-        updateData.pending_plan = null;
-      }
 
       // Store Asaas subscription ID if present
       if (subscription?.id) {
@@ -180,36 +226,85 @@ Deno.serve(async (req) => {
 
       // Record payment in payment_history
       if (payment) {
-        await supabase.from("payment_history").upsert({
-          church_id: churchId,
-          asaas_payment_id: payment.id,
-          asaas_subscription_id: subscription?.id || null,
-          amount: payment.value || 0,
-          status: "paid",
-          payment_method: payment.billingType || null,
-          billing_type: payment.billingType || null,
-          due_date: payment.dueDate || null,
-          paid_at: new Date().toISOString(),
-          invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
-          description: `Pagamento - Plano ${updateData.plan || church.plan}`,
-          plan: updateData.plan || church.plan,
-        }, {
-          onConflict: "asaas_payment_id",
-        });
+        await supabase.from("payment_history").upsert(
+          {
+            church_id: churchId,
+            asaas_payment_id: payment.id,
+            asaas_subscription_id: subscription?.id || null,
+            amount: payment.value || 0,
+            status: "paid",
+            payment_method: payment.billingType || null,
+            billing_type: payment.billingType || null,
+            due_date: payment.dueDate || null,
+            paid_at: new Date().toISOString(),
+            invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+            description: `Pagamento - Plano ${church.plan}`,
+            plan: church.plan,
+          },
+          { onConflict: "asaas_payment_id" }
+        );
         console.log(`Payment ${payment.id} recorded in payment_history`);
       }
 
-      console.log(`Church ${churchId} activated with plan: ${updateData.plan || church.plan}`);
+      // If this was a new activation (pending_payment -> active)
+      if (wasActivation && ownerInfo) {
+        console.log(`New church activation for ${churchId}`);
 
-      // Send confirmation email
-      if (ownerInfo) {
+        // 1. Assign church_owner role to the user
+        await assignChurchOwnerRole(supabase, ownerInfo.userId);
+
+        // 2. Record subscription history
+        const planPrices: Record<string, number> = {
+          prata: 69,
+          ouro: 119,
+          diamante: 189,
+        };
+        await recordSubscriptionHistory(
+          supabase,
+          churchId,
+          "new",
+          null,
+          church.plan || "prata",
+          planPrices[church.plan || "prata"] || 0
+        );
+
+        // 3. Create in-app notification
+        await supabase.from("in_app_notifications").insert({
+          user_id: ownerInfo.userId,
+          church_id: churchId,
+          title: "Bem-vindo ao Portal Igrejas! 🎉",
+          message: `Sua igreja "${church.name}" foi ativada com sucesso. Explore o painel administrativo para começar a configurar seu site.`,
+          type: "info",
+          reference_type: "church",
+          reference_id: churchId,
+        });
+
+        // 4. Send push notification
+        await sendPushNotification(
+          supabase,
+          churchId,
+          "Igreja Ativada! 🎉",
+          `Sua igreja "${church.name}" está pronta. Acesse o painel para começar.`
+        );
+
+        // 5. Send confirmation email
         await sendPaymentEmail(
           "payment_confirmed",
           ownerInfo,
           church.name,
-          updateData.plan || church.plan
+          church.plan
+        );
+      } else if (ownerInfo) {
+        // Regular payment confirmation (not first activation)
+        await sendPaymentEmail(
+          "payment_confirmed",
+          ownerInfo,
+          church.name,
+          church.plan
         );
       }
+
+      console.log(`Church ${churchId} activated with plan: ${church.plan}`);
     }
 
     // Handle payment overdue events
@@ -220,17 +315,15 @@ Deno.serve(async (req) => {
       let daysOverdue = 0;
 
       if (!overdueDate) {
-        // First overdue - register date
         overdueDate = new Date().toISOString();
         await supabase
           .from("churches")
           .update({ payment_overdue_at: overdueDate })
           .eq("id", churchId);
-        
+
         console.log(`First overdue registered for church ${churchId}`);
       }
 
-      // Calculate days overdue
       daysOverdue = Math.floor(
         (Date.now() - new Date(overdueDate).getTime()) / (1000 * 60 * 60 * 24)
       );
@@ -246,12 +339,19 @@ Deno.serve(async (req) => {
 
         console.log(`Church ${churchId} suspended after ${daysOverdue} days overdue`);
 
-        // Send suspended email
         if (ownerInfo) {
           await sendPaymentEmail("church_suspended", ownerInfo, church.name);
+          
+          // Create in-app notification
+          await supabase.from("in_app_notifications").insert({
+            user_id: ownerInfo.userId,
+            church_id: churchId,
+            title: "Site Suspenso",
+            message: "Seu site foi suspenso por falta de pagamento. Regularize para reativar.",
+            type: "error",
+          });
         }
       } else if (ownerInfo) {
-        // Send overdue warning email
         await sendPaymentEmail("payment_overdue", ownerInfo, church.name, undefined, daysOverdue);
       }
     }
@@ -259,7 +359,6 @@ Deno.serve(async (req) => {
     // Handle payment deleted
     if (event === "PAYMENT_DELETED") {
       console.log(`Payment deleted for church ${churchId}`);
-      // Update payment_history if exists
       if (payment?.id) {
         await supabase
           .from("payment_history")
@@ -272,21 +371,22 @@ Deno.serve(async (req) => {
     if (event === "PAYMENT_CREATED") {
       console.log(`Payment created for church ${churchId}`);
       if (payment) {
-        await supabase.from("payment_history").upsert({
-          church_id: churchId,
-          asaas_payment_id: payment.id,
-          asaas_subscription_id: subscription?.id || null,
-          amount: payment.value || 0,
-          status: "pending",
-          payment_method: payment.billingType || null,
-          billing_type: payment.billingType || null,
-          due_date: payment.dueDate || null,
-          invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
-          description: `Fatura - Plano ${church.plan}`,
-          plan: church.plan,
-        }, {
-          onConflict: "asaas_payment_id",
-        });
+        await supabase.from("payment_history").upsert(
+          {
+            church_id: churchId,
+            asaas_payment_id: payment.id,
+            asaas_subscription_id: subscription?.id || null,
+            amount: payment.value || 0,
+            status: "pending",
+            payment_method: payment.billingType || null,
+            billing_type: payment.billingType || null,
+            due_date: payment.dueDate || null,
+            invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+            description: `Fatura - Plano ${church.plan}`,
+            plan: church.plan,
+          },
+          { onConflict: "asaas_payment_id" }
+        );
         console.log(`Payment ${payment.id} created in payment_history`);
       }
     }
@@ -310,21 +410,44 @@ Deno.serve(async (req) => {
     if (event === "SUBSCRIPTION_DELETED" || event === "SUBSCRIPTION_INACTIVATED") {
       console.log(`Subscription cancelled for church ${churchId}`);
 
+      const previousPlan = church.plan;
+      const planPrices: Record<string, number> = {
+        prata: 69,
+        ouro: 119,
+        diamante: 189,
+      };
+
       await supabase
         .from("churches")
         .update({
           plan: "free",
-          pending_plan: null,
           asaas_subscription_id: null,
           payment_overdue_at: null,
         })
         .eq("id", churchId);
 
+      // Record churn in subscription history
+      await recordSubscriptionHistory(
+        supabase,
+        churchId,
+        "churn",
+        previousPlan,
+        "free",
+        -(planPrices[previousPlan || "prata"] || 0)
+      );
+
       console.log(`Church ${churchId} downgraded to free plan`);
 
-      // Send cancellation email
       if (ownerInfo) {
         await sendPaymentEmail("subscription_cancelled", ownerInfo, church.name);
+        
+        await supabase.from("in_app_notifications").insert({
+          user_id: ownerInfo.userId,
+          church_id: churchId,
+          title: "Assinatura Cancelada",
+          message: "Sua assinatura foi cancelada. Seu site continua ativo no plano gratuito.",
+          type: "warning",
+        });
       }
     }
 
