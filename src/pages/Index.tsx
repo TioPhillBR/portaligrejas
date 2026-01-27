@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import HeroSection from "@/components/sections/HeroSection";
 import ServiceScheduleSection from "@/components/sections/ServiceScheduleSection";
@@ -32,6 +34,21 @@ const sectionComponents: Record<string, React.ComponentType<{ sectionData?: any 
 
 const Index = () => {
   const { data: sections, isLoading } = useHomeSections();
+  const location = useLocation();
+
+  // Handle anchor scroll when navigating from another page
+  useEffect(() => {
+    if (location.hash) {
+      // Small delay to ensure the page is rendered
+      const timeoutId = setTimeout(() => {
+        const element = document.querySelector(location.hash);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [location.hash]);
 
   // Default order if sections are not loaded yet
   const defaultOrder = [

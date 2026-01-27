@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Menu, X, LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
@@ -20,6 +20,8 @@ const navItems = [
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,9 +37,16 @@ const Header = () => {
       setIsMobileMenuOpen(false);
       return;
     }
-    const element = document.querySelector(href);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+
+    // If we're on the homepage, scroll directly
+    if (location.pathname === "/") {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      // Navigate to homepage with anchor
+      navigate("/" + href);
     }
     setIsMobileMenuOpen(false);
   };
