@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,7 +28,7 @@ interface RouteGuardProps {
   children: React.ReactNode;
 }
 
-export const RouteGuard = forwardRef<HTMLDivElement, RouteGuardProps>(({ children }, ref) => {
+export const RouteGuard = ({ children }: RouteGuardProps) => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [isValid, setIsValid] = useState<boolean | null>(null);
@@ -97,9 +97,7 @@ export const RouteGuard = forwardRef<HTMLDivElement, RouteGuardProps>(({ childre
     return null;
   }
 
-  return <div ref={ref}>{children}</div>;
-});
-
-RouteGuard.displayName = "RouteGuard";
+  return <>{children}</>;
+};
 
 export default RouteGuard;
