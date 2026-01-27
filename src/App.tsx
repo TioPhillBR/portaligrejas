@@ -23,6 +23,9 @@ import MinistryDetails from "./pages/MinistryDetails";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 
+// Churches list
+import ChurchesList from "./pages/ChurchesList";
+
 // Admin components
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -44,6 +47,15 @@ import AdminHomeSections from "./pages/admin/HomeSections";
 import AdminEntityPhotos from "./pages/admin/EntityPhotos";
 import AdminThemeSettings from "./pages/admin/ThemeSettings";
 
+// Platform admin components
+import PlatformLayout from "./components/platform/PlatformLayout";
+import PlatformDashboard from "./pages/platform/PlatformDashboard";
+import PlatformChurches from "./pages/platform/PlatformChurches";
+import PlatformUsers from "./pages/platform/PlatformUsers";
+import PlatformSubscriptions from "./pages/platform/PlatformSubscriptions";
+import PlatformReports from "./pages/platform/PlatformReports";
+import PlatformSettings from "./pages/platform/PlatformSettings";
+
 // Member components
 import MemberLayout from "./components/member/MemberLayout";
 import MemberDashboard from "./pages/member/MemberDashboard";
@@ -59,6 +71,7 @@ import MemberSearch from "./pages/member/MemberSearch";
 
 // Church site wrapper
 import { ChurchProvider } from "./contexts/ChurchContext";
+import RouteGuard from "./components/RouteGuard";
 
 import NotFound from "./pages/NotFound";
 
@@ -66,27 +79,10 @@ const queryClient = new QueryClient();
 
 // Wrapper component for church routes
 const ChurchRouteWrapper = ({ children }: { children: React.ReactNode }) => (
-  <ChurchProvider>{children}</ChurchProvider>
+  <ChurchProvider>
+    <RouteGuard>{children}</RouteGuard>
+  </ChurchProvider>
 );
-
-// Reserved routes that should not be treated as church slugs
-const RESERVED_ROUTES = [
-  'criar-igreja',
-  'login', 
-  'cadastro',
-  'setup',
-  'admin',
-  'membro',
-  'plataforma',
-  'api',
-  'termos',
-  'privacidade',
-  'cookies',
-  'ajuda',
-  'suporte',
-  'contato',
-  'precos',
-];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -101,11 +97,22 @@ const App = () => (
               {/* ===== LANDING PAGE (SaaS) ===== */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/criar-igreja" element={<CreateChurch />} />
+              <Route path="/igrejas" element={<ChurchesList />} />
               
               {/* ===== AUTH PAGES ===== */}
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Register />} />
               <Route path="/setup" element={<Setup />} />
+              
+              {/* ===== PLATFORM ADMIN ROUTES (/plataforma) ===== */}
+              <Route path="/plataforma" element={<PlatformLayout />}>
+                <Route index element={<PlatformDashboard />} />
+                <Route path="igrejas" element={<PlatformChurches />} />
+                <Route path="usuarios" element={<PlatformUsers />} />
+                <Route path="assinaturas" element={<PlatformSubscriptions />} />
+                <Route path="relatorios" element={<PlatformReports />} />
+                <Route path="configuracoes" element={<PlatformSettings />} />
+              </Route>
               
               {/* ===== CHURCH SITE ROUTES (/:slug) ===== */}
               {/* Church homepage - directly at root level */}
