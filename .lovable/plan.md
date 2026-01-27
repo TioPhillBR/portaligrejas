@@ -1,233 +1,226 @@
 
+# Plano: Sistema de Emails de Pagamento e Suspensão Automática
 
-# Plano: Recriar Landing Page - PRD Portal Igrejas
+## Resumo
+Implementar notificações por email para eventos de pagamento usando Resend e expandir o webhook do Asaas para gerenciar suspensão/reativação automática de igrejas com base no status dos pagamentos.
 
-## Resumo das Mudanças
+## Arquitetura da Solução
 
-Recriar a landing page completa seguindo o PRD fornecido, com foco em conversão para planos pagos (Prata, Ouro, Diamante), verificacao de slug em tempo real, e estrutura otimizada para alta conversao.
+```text
+┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
+│     Asaas       │─────▶│  asaas-webhook   │─────▶│    Supabase     │
+│   (Eventos)     │      │ (Edge Function)  │      │   (Database)    │
+└─────────────────┘      └────────┬─────────┘      └─────────────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │  send-payment   │
+                         │  -email (Nova)  │
+                         └────────┬────────┘
+                                  │
+                                  ▼
+                         ┌─────────────────┐
+                         │     Resend      │
+                         │   (Emails)      │
+                         └─────────────────┘
+```
 
----
+## Implementação
 
-## 1. Alteracoes no Hero Section
+### 1. Adicionar Campos de Controle de Pagamentos no Banco
+Adicionar colunas na tabela `churches` para rastrear o status de pagamentos:
 
-### Arquivo: `src/components/landing/LandingHero.tsx`
+```sql
+-- Nova migration
+ALTER TABLE public.churches 
+ADD COLUMN IF NOT EXISTS payment_overdue_at TIMESTAMPTZ DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS asaas_subscription_id TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS asaas_customer_id TEXT DEFAULT NULL;
 
-**Alteracoes:**
-- Atualizar headline para: "Um site profissional para sua igreja, sem complicacao"
-- Atualizar subheadline para: "Crie agora o site da sua igreja com dominio personalizado, design moderno e suporte completo."
-- Campo de verificacao: "Escolha o endereco do seu site: portaligrejas.com/[__]"
-- Botao CTA: "Criar meu site agora"
-- Mensagens dinamicas:
-  - Disponivel: "portaligrejas.com/[slug] esta disponivel!"
-  - Indisponivel: "Este nome ja esta em uso. Tente outro."
-- Remover indicadores de "Gratis para comecar" e "Sem cartao de credito"
+COMMENT ON COLUMN public.churches.payment_overdue_at IS 'Data do primeiro pagamento em atraso';
+COMMENT ON COLUMN public.churches.asaas_subscription_id IS 'ID da assinatura no Asaas';
+COMMENT ON COLUMN public.churches.asaas_customer_id IS 'ID do cliente no Asaas';
+```
 
----
+### 2. Criar Edge Function para Envio de Emails
+Nova função `send-payment-email`:
 
-## 2. Alteracoes no Features/Beneficios
+```typescript
+// supabase/functions/send-payment-email/index.ts
+import { Resend } from "npm:resend@2.0.0";
 
-### Arquivo: `src/components/landing/Features.tsx`
+type EmailType = "payment_confirmed" | "payment_overdue" | "subscription_cancelled";
 
-**Alteracoes:**
-- Titulo: "Tudo que sua igreja precisa"
-- Subtitulo: "Recursos completos para gerenciar sua comunidade e manter todos conectados."
-- Lista de 12 beneficios com icones:
-  1. Gestao de Eventos com confirmacao online
-  2. Ministerios e Grupos organizados
-  3. Blog Integrado para reflexoes e estudos
-  4. Galeria de Fotos
-  5. Notificacoes para membros
-  6. Personalizacao visual
-  7. Area do Membro
-  8. Site 100% Responsivo
-  9. Chat de Ministerios
-  10. Pedidos de Oracao
-  11. Web Radio
-  12. Painel Administrativo intuitivo
+interface EmailPayload {
+  type: EmailType;
+  to: string;
+  churchName: string;
+  ownerName: string;
+  planName?: string;
+  daysOverdue?: number;
+}
 
----
+// Templates HTML personalizados para cada tipo de email
+// - Pagamento Confirmado: Boas-vindas + detalhes do plano
+// - Pagamento em Atraso: Aviso + orientações para regularização
+// - Assinatura Cancelada: Notificação + benefícios perdidos
+```
 
-## 3. Nova Secao: Demonstracao do Template
+### 3. Expandir o Webhook do Asaas
+Atualizar `asaas-webhook/index.ts` para:
 
-### Novo Arquivo: `src/components/landing/TemplateDemo.tsx`
+**a) Pagamento Confirmado (`PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED`):**
+- Ativar igreja (`status: "active"`)
+- Limpar data de atraso (`payment_overdue_at: null`)
+- Atualizar plano se houver `pending_plan`
+- Enviar email de confirmação
 
-**Conteudo:**
-- Titulo: "Design moderno e pensado para igrejas evangelicas"
-- Subtitulo: "Seu site sera bonito, funcional e adaptado para celular, com secoes especificas para sua missao."
-- Mockup do template (desktop + mobile)
-- Botao: "Ver exemplo de site ao vivo"
-- Destaques visuais: agenda de cultos, mensagens, ministerios, formulario de contato
+**b) Pagamento em Atraso (`PAYMENT_OVERDUE`):**
+- Registrar primeira data de atraso se não existir
+- Calcular dias em atraso
+- **Se >= 7 dias:** Suspender igreja (`status: "suspended"`)
+- Enviar email de aviso (informando dias restantes ou suspensão)
 
----
+**c) Assinatura Cancelada (`SUBSCRIPTION_DELETED`/`SUBSCRIPTION_INACTIVATED`):**
+- Rebaixar para plano free
+- Limpar campos de assinatura
+- Enviar email de cancelamento
 
-## 4. Alteracoes nos Planos e Precos
+```typescript
+// Lógica de suspensão automática
+if (event === "PAYMENT_OVERDUE") {
+  const { data: church } = await supabase
+    .from("churches")
+    .select("payment_overdue_at, email, name, ...")
+    .eq("id", churchId)
+    .single();
 
-### Arquivo: `src/components/landing/PricingCards.tsx`
+  let overdueDate = church.payment_overdue_at;
+  
+  if (!overdueDate) {
+    // Primeiro atraso - registrar data
+    overdueDate = new Date().toISOString();
+    await supabase.from("churches")
+      .update({ payment_overdue_at: overdueDate })
+      .eq("id", churchId);
+  }
+  
+  const daysOverdue = Math.floor(
+    (Date.now() - new Date(overdueDate).getTime()) / (1000 * 60 * 60 * 24)
+  );
+  
+  if (daysOverdue >= 7) {
+    // Suspender igreja
+    await supabase.from("churches")
+      .update({ status: "suspended" })
+      .eq("id", churchId);
+  }
+  
+  // Enviar email de atraso
+  await sendEmail("payment_overdue", { daysOverdue, ... });
+}
+```
 
-**Novos Planos (somente pagos):**
+### 4. Obter Email do Owner
+Para enviar emails ao proprietário da igreja, buscar o email através de:
+1. `church.email` (email da igreja cadastrado)
+2. Se não existir, buscar o owner via `church_members` com `role = 'owner'`
+3. Usar `auth.admin.getUserById()` para obter email do Supabase Auth
 
-| Recurso | Prata R$ 69/mes | Ouro R$ 119/mes | Diamante R$ 189/mes |
-|---------|-----------------|-----------------|---------------------|
-| Site 100% Responsivo | Sim | Sim | Sim |
-| Painel Administrativo | Sim | Sim | Sim |
-| Personalizacao Visual | Sim | Sim | Sim |
-| Galeria de Fotos | Sim | Sim | Sim |
-| Gestao de Eventos | Sim | Sim | Sim |
-| Pedidos de Oracao | Sim | Sim | Sim |
-| Blog Integrado | Nao | Sim | Sim |
-| Ministerios e Grupos | Nao | Sim | Sim |
-| Area do Membro | Nao | Sim | Sim |
-| Notificacoes Push | Nao | Sim | Sim |
-| Chat de Ministerios | Nao | Nao | Sim |
-| Web Radio / Streaming | Nao | Nao | Sim |
+```typescript
+async function getOwnerEmail(supabase, churchId: string): Promise<{email: string, name: string} | null> {
+  // 1. Tentar email da igreja primeiro
+  const { data: church } = await supabase
+    .from("churches")
+    .select("email, name, owner_id")
+    .eq("id", churchId)
+    .single();
+    
+  if (church?.email) {
+    return { email: church.email, name: church.name };
+  }
+  
+  // 2. Buscar owner via church_members
+  const { data: owner } = await supabase
+    .from("church_members")
+    .select("user_id, profiles(full_name)")
+    .eq("church_id", churchId)
+    .eq("role", "owner")
+    .single();
+    
+  if (owner?.user_id) {
+    // 3. Obter email via Supabase Admin API
+    const { data: { user } } = await supabase.auth.admin.getUserById(owner.user_id);
+    return { email: user?.email, name: owner.profiles?.full_name };
+  }
+  
+  return null;
+}
+```
 
-**CTAs dos Planos:**
-- Prata: "Quero o Plano Prata"
-- Ouro: "Quero o Plano Ouro" (destacado como mais popular)
-- Diamante: "Quero o Plano Diamante"
+### 5. Configuração Necessária
 
----
+**Secret a adicionar:**
+- `RESEND_API_KEY` - Chave da API do Resend para envio de emails
 
-## 5. Nova Secao: Como Funciona
+**Pré-requisitos do usuário:**
+1. Criar conta em https://resend.com
+2. Validar domínio em https://resend.com/domains
+3. Criar API key em https://resend.com/api-keys
 
-### Novo Arquivo: `src/components/landing/HowItWorks.tsx`
+### 6. Templates de Email
 
-**Conteudo:**
-- Titulo: "Crie seu site em 3 passos simples"
-- Passos com icones:
-  1. Escolha o nome do seu site (ex: portaligrejas.com/igrejaviva)
-  2. Personalize com logo, textos e imagens
-  3. Publique e compartilhe com sua comunidade
-- Frase final: "Tudo isso sem precisar saber programar!"
+| Tipo | Assunto | Conteúdo Principal |
+|------|---------|-------------------|
+| Pagamento Confirmado | "🎉 Pagamento confirmado - {Igreja}" | Boas-vindas, detalhes do plano ativado |
+| Pagamento em Atraso | "⚠️ Pagamento pendente - {Igreja}" | Aviso, dias restantes antes da suspensão |
+| Igreja Suspensa | "🚫 Igreja suspensa - {Igreja}" | Notificação, instruções para regularizar |
+| Assinatura Cancelada | "📋 Assinatura cancelada - {Igreja}" | Confirmação, plano rebaixado para free |
 
----
+## Fluxo de Eventos
 
-## 6. Alteracoes nos Depoimentos
+```text
+PAGAMENTO_CONFIRMADO
+    ├── Ativar igreja (status: active)
+    ├── Limpar payment_overdue_at
+    ├── Aplicar pending_plan se existir
+    └── Enviar email de confirmação ✉️
 
-### Arquivo: `src/components/landing/Testimonials.tsx`
+PAGAMENTO_EM_ATRASO
+    ├── Registrar payment_overdue_at (se primeiro atraso)
+    ├── Calcular dias em atraso
+    ├── SE dias >= 7: Suspender (status: suspended)
+    └── Enviar email de aviso ✉️
 
-**Alteracoes:**
-- Titulo: "Igrejas que ja confiam no Portal Igrejas"
-- Depoimentos atualizados conforme PRD:
-  1. "Agora temos um site lindo e recebemos doacoes online. Foi um divisor de aguas!" - Pr. Joao, Igreja Vida Plena (SP)
-  2. "Facil de usar, rapido de publicar. Nossa agenda de cultos esta sempre atualizada." - Pastora Ana, Ministerio Luz do Mundo (MG)
-- Adicionar mais 1-2 depoimentos para equilibrar
+ASSINATURA_CANCELADA
+    ├── Rebaixar para free
+    ├── Limpar campos Asaas
+    └── Enviar email de cancelamento ✉️
+```
 
----
+## Arquivos a Modificar/Criar
 
-## 7. Nova Secao: FAQ
+| Arquivo | Ação |
+|---------|------|
+| `supabase/migrations/xxx.sql` | Criar - campos de controle |
+| `supabase/functions/send-payment-email/index.ts` | Criar - envio de emails |
+| `supabase/functions/asaas-webhook/index.ts` | Modificar - lógica expandida |
+| `supabase/config.toml` | Modificar - registrar nova função |
 
-### Novo Arquivo: `src/components/landing/FAQ.tsx`
+## Detalhes Técnicos
 
-**Conteudo:**
-- Titulo: "Duvidas Frequentes"
-- Perguntas e respostas:
-  1. "Preciso saber programar?" - "Nao. A plataforma e 100% visual e facil de usar."
-  2. "Posso usar meu dominio proprio?" - "Sim. Voce pode usar um dominio personalizado ou manter o endereco portaligrejas.com/nomedaigreja."
-  3. "O site funciona no celular?" - "Sim. Seu site sera 100% responsivo."
-  4. "Posso cancelar quando quiser?" - "Sim. Nao ha fidelidade. Voce pode cancelar a qualquer momento."
-  5. "Tem suporte tecnico?" - "Sim. Nossa equipe esta disponivel por WhatsApp e e-mail para te ajudar."
+### RLS e Segurança
+- A edge function usa `SUPABASE_SERVICE_ROLE_KEY` para bypass de RLS
+- Email enviado apenas para o owner/email cadastrado da igreja
+- Webhook do Asaas deve ter `verify_jwt = false` (já configurado)
 
----
+### Tratamento de Erros
+- Logs detalhados para cada evento processado
+- Fallback se email não puder ser enviado (não bloqueia o webhook)
+- Retry automático do Asaas em caso de falha 5xx
 
-## 8. Alteracoes no Rodape
-
-### Arquivo: `src/components/landing/LandingFooter.tsx`
-
-**Alteracoes:**
-- Adicionar links para: Termos de uso | Politica de privacidade | Suporte
-- Adicionar contato: WhatsApp, E-mail
-- Adicionar redes sociais: Instagram, YouTube
-- Adicionar selo de seguranca (SSL, pagamento seguro)
-- Adicionar aviso de cookies (LGPD)
-
----
-
-## 9. Atualizacao da Pagina Principal
-
-### Arquivo: `src/pages/landing/LandingPage.tsx`
-
-**Alteracoes na Navegacao:**
-- Desktop: Recursos, Como Funciona, Precos, Depoimentos, FAQ
-- Adicionar link "Suporte" ou "Contato"
-
-**Ordem das Secoes:**
-1. Hero (verificacao de slug)
-2. Features (Beneficios)
-3. TemplateDemo (Demonstracao)
-4. PricingCards (Planos Prata/Ouro/Diamante)
-5. HowItWorks (Como Funciona)
-6. Testimonials (Depoimentos)
-7. FAQ
-8. Footer
-
----
-
-## 10. Tabela Comparativa de Planos
-
-### Novo Arquivo: `src/components/landing/PricingTable.tsx`
-
-**Conteudo:**
-- Tabela responsiva com comparativo completo
-- Colunas: Recurso, Prata, Ouro, Diamante
-- Icones de check/x para indicar disponibilidade
-- Sticky header para mobile
-- CTA no final de cada coluna
-
----
-
-## Arquivos a Criar
-
-| Arquivo | Descricao |
-|---------|-----------|
-| `src/components/landing/TemplateDemo.tsx` | Secao de demonstracao do template |
-| `src/components/landing/HowItWorks.tsx` | Secao "Como Funciona" |
-| `src/components/landing/FAQ.tsx` | Secao de perguntas frequentes |
-| `src/components/landing/PricingTable.tsx` | Tabela comparativa de planos |
-
----
-
-## Arquivos a Modificar
-
-| Arquivo | Alteracoes |
-|---------|-----------|
-| `src/pages/landing/LandingPage.tsx` | Nova estrutura, ordem das secoes, navegacao |
-| `src/components/landing/LandingHero.tsx` | Novo copy conforme PRD |
-| `src/components/landing/Features.tsx` | Lista atualizada de beneficios |
-| `src/components/landing/PricingCards.tsx` | Novos planos Prata/Ouro/Diamante |
-| `src/components/landing/Testimonials.tsx` | Depoimentos atualizados |
-| `src/components/landing/LandingFooter.tsx` | Links, contato, selos, LGPD |
-
----
-
-## Detalhes Tecnicos
-
-### Verificacao de Slug (LandingHero)
-- Validacao AJAX em tempo real (ja implementado)
-- Sugestoes automaticas se slug estiver indisponivel
-- Slug aceita apenas letras, numeros e hifens (ja implementado)
-- Debounce de 500ms para evitar requests excessivos
-
-### Responsividade
-- Mobile-first design
-- Tabela de precos com scroll horizontal em mobile
-- Cards de planos empilhados em mobile
-- Menu hamburger (ja implementado)
-
-### Animacoes
-- Fade-in nas secoes ao scroll
-- Hover effects nos cards
-- Transicoes suaves nos botoes
-
----
-
-## Resultado Esperado
-
-- Landing page profissional focada em conversao
-- Planos pagos claros (Prata R$69, Ouro R$119, Diamante R$189)
-- Verificacao de URL em tempo real
-- FAQ para eliminar objecoes
-- Prova social com depoimentos
-- Design moderno e responsivo
-- Conformidade com LGPD (aviso de cookies)
-
+### Reativação Automática
+Quando um pagamento atrasado é regularizado:
+- `PAYMENT_CONFIRMED` limpa `payment_overdue_at`
+- Igreja volta para `status: "active"`
+- Email de confirmação é enviado
