@@ -4,13 +4,24 @@ import { Button } from "@/components/ui/button";
 import { PortalLogo } from "@/components/PortalLogo";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { Features } from "@/components/landing/Features";
+import { TemplateDemo } from "@/components/landing/TemplateDemo";
 import { PricingCards } from "@/components/landing/PricingCards";
+import { HowItWorks } from "@/components/landing/HowItWorks";
 import { Testimonials } from "@/components/landing/Testimonials";
+import { FAQ } from "@/components/landing/FAQ";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 import { Menu, X } from "lucide-react";
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    { href: "#recursos", label: "Recursos" },
+    { href: "#como-funciona", label: "Como Funciona" },
+    { href: "#precos", label: "Preços" },
+    { href: "#depoimentos", label: "Depoimentos" },
+    { href: "#faq", label: "FAQ" },
+  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,25 +35,25 @@ const LandingPage = () => {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-8">
-              <a href="#recursos" className="text-muted-foreground hover:text-foreground transition-colors">
-                Recursos
-              </a>
-              <a href="#precos" className="text-muted-foreground hover:text-foreground transition-colors">
-                Preços
-              </a>
-              <a href="#depoimentos" className="text-muted-foreground hover:text-foreground transition-colors">
-                Depoimentos
-              </a>
+            <nav className="hidden lg:flex items-center gap-6">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+                >
+                  {link.label}
+                </a>
+              ))}
             </nav>
 
             {/* Desktop Actions */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
               <Button variant="ghost" asChild>
                 <Link to="/login">Entrar</Link>
               </Button>
               <Button asChild>
-                <Link to="/criar-igreja">Criar Igreja</Link>
+                <Link to="/criar-igreja">Criar meu site</Link>
               </Button>
             </div>
 
@@ -50,7 +61,7 @@ const LandingPage = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="md:hidden"
+              className="lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -60,35 +71,24 @@ const LandingPage = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background">
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-4">
-              <a
-                href="#recursos"
-                className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Recursos
-              </a>
-              <a
-                href="#precos"
-                className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Preços
-              </a>
-              <a
-                href="#depoimentos"
-                className="text-muted-foreground hover:text-foreground transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Depoimentos
-              </a>
-              <div className="flex flex-col gap-2 pt-4 border-t border-border">
+          <div className="lg:hidden border-t border-border bg-background">
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              {navLinks.map((link) => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors py-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div className="flex flex-col gap-2 pt-4 border-t border-border mt-2">
                 <Button variant="outline" asChild className="w-full">
                   <Link to="/login">Entrar</Link>
                 </Button>
                 <Button asChild className="w-full">
-                  <Link to="/criar-igreja">Criar Igreja</Link>
+                  <Link to="/criar-igreja">Criar meu site</Link>
                 </Button>
               </div>
             </nav>
@@ -100,8 +100,11 @@ const LandingPage = () => {
       <main>
         <LandingHero />
         <Features />
+        <TemplateDemo />
         <PricingCards />
+        <HowItWorks />
         <Testimonials />
+        <FAQ />
       </main>
 
       <LandingFooter />
