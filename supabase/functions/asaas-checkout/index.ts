@@ -28,6 +28,19 @@ interface CheckoutData {
   customerPhone?: string;
   successUrl: string;
   cancelUrl: string;
+  couponCode?: string;
+}
+
+interface CouponData {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  is_active: boolean;
+  valid_from: string | null;
+  valid_until: string | null;
+  max_uses: number | null;
+  current_uses: number;
 }
 
 Deno.serve(async (req) => {
@@ -68,6 +81,7 @@ Deno.serve(async (req) => {
       customerPhone,
       successUrl,
       cancelUrl,
+      couponCode,
     }: CheckoutData = await req.json();
 
     if (!churchId || !plan || !customerName || !customerEmail || !customerCpfCnpj) {
@@ -77,7 +91,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const value = PLAN_PRICES[plan];
+    let value = PLAN_PRICES[plan];
     if (!value) {
       return new Response(
         JSON.stringify({ error: "Plano inválido" }),
@@ -91,6 +105,71 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Chave da API não configurada" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Create service client for coupon validation
+    const serviceClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    let appliedCoupon: CouponData | null = null;
+    let discountApplied = 0;
+
+    // Validate and apply coupon if provided
+    if (couponCode) {
+      console.log("Validating coupon:", couponCode);
+      
+      const { data: coupon, error: couponError } = await serviceClient
+        .from("discount_coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase().trim())
+        .eq("is_active", true)
+        .single();
+
+      if (couponError || !coupon) {
+        console.log("Coupon not found or inactive:", couponCode);
+        return new Response(
+          JSON.stringify({ error: "Cupom inválido ou expirado" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check validity dates
+      const now = new Date();
+      if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+        return new Response(
+          JSON.stringify({ error: "Cupom ainda não está válido" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (coupon.valid_until && new Date(coupon.valid_until) < now) {
+        return new Response(
+          JSON.stringify({ error: "Cupom expirado" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Check usage limit
+      if (coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses) {
+        return new Response(
+          JSON.stringify({ error: "Cupom esgotado" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Calculate discount
+      if (coupon.discount_type === "percentage") {
+        discountApplied = value * (coupon.discount_value / 100);
+      } else {
+        discountApplied = Math.min(coupon.discount_value, value);
+      }
+
+      value = Math.max(0, value - discountApplied);
+      appliedCoupon = coupon;
+      
+      console.log(`Coupon applied: ${coupon.code}, discount: R$ ${discountApplied.toFixed(2)}, final value: R$ ${value.toFixed(2)}`);
     }
 
     // Create payment link with subscription
@@ -137,25 +216,42 @@ Deno.serve(async (req) => {
     }
 
     // Update church with pending subscription info
-    const serviceClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     await serviceClient
       .from("churches")
       .update({
         settings: {
           pending_plan: plan,
           asaas_payment_link_id: data.id,
+          applied_coupon: appliedCoupon?.code || null,
+          discount_applied: discountApplied,
         },
       })
       .eq("id", churchId);
+
+    // Record coupon usage if applied
+    if (appliedCoupon) {
+      await serviceClient
+        .from("coupon_uses")
+        .insert({
+          coupon_id: appliedCoupon.id,
+          church_id: churchId,
+          discount_applied: discountApplied,
+        });
+
+      // Increment coupon usage count
+      await serviceClient
+        .from("discount_coupons")
+        .update({ current_uses: appliedCoupon.current_uses + 1 })
+        .eq("id", appliedCoupon.id);
+    }
 
     return new Response(
       JSON.stringify({ 
         paymentLink: data.url,
         paymentLinkId: data.id,
+        discountApplied: discountApplied > 0 ? discountApplied : undefined,
+        finalValue: value,
+        couponApplied: appliedCoupon?.code || undefined,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

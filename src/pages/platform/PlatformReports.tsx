@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRight, BarChart3 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRight, BarChart3, FileDown, FileSpreadsheet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useReportExport } from "@/hooks/useReportExport";
 import {
   LineChart,
   Line,
@@ -57,6 +59,7 @@ const PlatformReports = () => {
   const [churches, setChurches] = useState<ChurchData[]>([]);
   const [history, setHistory] = useState<SubscriptionHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const { exportToPDF, exportToExcel } = useReportExport();
   const [period, setPeriod] = useState("6");
 
   useEffect(() => {
@@ -183,25 +186,45 @@ const PlatformReports = () => {
     );
   }
 
+  const handleExportPDF = () => {
+    exportToPDF(metrics);
+    toast.success("Relatório PDF gerado com sucesso!");
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(metrics);
+    toast.success("Relatório Excel gerado com sucesso!");
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Relatórios Financeiros</h1>
           <p className="text-muted-foreground">
             Análises e métricas de receita da plataforma
           </p>
         </div>
-        <Select value={period} onValueChange={setPeriod}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="3">Últimos 3 meses</SelectItem>
-            <SelectItem value="6">Últimos 6 meses</SelectItem>
-            <SelectItem value="12">Último ano</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" onClick={handleExportPDF} className="gap-2">
+            <FileDown className="h-4 w-4" />
+            Exportar PDF
+          </Button>
+          <Button variant="outline" onClick={handleExportExcel} className="gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            Exportar Excel
+          </Button>
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">Últimos 3 meses</SelectItem>
+              <SelectItem value="6">Últimos 6 meses</SelectItem>
+              <SelectItem value="12">Último ano</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* KPI Cards */}
