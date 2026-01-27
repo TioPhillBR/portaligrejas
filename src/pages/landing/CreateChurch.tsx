@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+// Note: Church URLs are now at root level: portaligrejas.com.br/[slug]
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -131,9 +132,9 @@ const CreateChurch = () => {
         description: "Você será redirecionado para o painel administrativo.",
       });
 
-      // Redirect to church admin
+      // Redirect to church admin (now at root level)
       setTimeout(() => {
-        navigate(`/igreja/${data.slug}/admin`);
+        navigate(`/${data.slug}/admin`);
       }, 1500);
     } catch (error: any) {
       console.error("Error creating church:", error);
@@ -213,7 +214,7 @@ const CreateChurch = () => {
                       <Label htmlFor="slug">Endereço do Site</Label>
                       <div className="flex items-center bg-muted rounded-lg overflow-hidden border border-input">
                         <span className="px-3 text-muted-foreground text-sm whitespace-nowrap">
-                          portaligrejas.com/igreja/
+                          portaligrejas.com/
                         </span>
                         <Input
                           id="slug"

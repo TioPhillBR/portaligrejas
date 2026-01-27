@@ -16,7 +16,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Setup from "./pages/Setup";
 
-// Legacy/Demo pages (to be migrated)
+// Church site pages
 import Index from "./pages/Index";
 import EventDetails from "./pages/EventDetails";
 import MinistryDetails from "./pages/MinistryDetails";
@@ -60,9 +60,6 @@ import MemberSearch from "./pages/member/MemberSearch";
 // Church site wrapper
 import { ChurchProvider } from "./contexts/ChurchContext";
 
-// Platform admin (future)
-// import PlatformLayout from "./pages/platform/PlatformLayout";
-
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -71,6 +68,25 @@ const queryClient = new QueryClient();
 const ChurchRouteWrapper = ({ children }: { children: React.ReactNode }) => (
   <ChurchProvider>{children}</ChurchProvider>
 );
+
+// Reserved routes that should not be treated as church slugs
+const RESERVED_ROUTES = [
+  'criar-igreja',
+  'login', 
+  'cadastro',
+  'setup',
+  'admin',
+  'membro',
+  'plataforma',
+  'api',
+  'termos',
+  'privacidade',
+  'cookies',
+  'ajuda',
+  'suporte',
+  'contato',
+  'precos',
+];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -82,7 +98,7 @@ const App = () => (
           <BrowserRouter>
             <ScrollToTop />
             <Routes>
-              {/* ===== LANDING PAGES (SaaS) ===== */}
+              {/* ===== LANDING PAGE (SaaS) ===== */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/criar-igreja" element={<CreateChurch />} />
               
@@ -91,35 +107,44 @@ const App = () => (
               <Route path="/cadastro" element={<Register />} />
               <Route path="/setup" element={<Setup />} />
               
-              {/* ===== CHURCH SITE ROUTES (/igreja/:slug) ===== */}
-              <Route path="/igreja/:slug" element={
+              {/* ===== CHURCH SITE ROUTES (/:slug) ===== */}
+              {/* Church homepage - directly at root level */}
+              <Route path="/:slug" element={
                 <ChurchRouteWrapper>
                   <Index />
                 </ChurchRouteWrapper>
               } />
-              <Route path="/igreja/:slug/evento/:id" element={
+              
+              {/* Church event details */}
+              <Route path="/:slug/evento/:id" element={
                 <ChurchRouteWrapper>
                   <EventDetails />
                 </ChurchRouteWrapper>
               } />
-              <Route path="/igreja/:slug/ministerio/:id" element={
+              
+              {/* Church ministry details */}
+              <Route path="/:slug/ministerio/:id" element={
                 <ChurchRouteWrapper>
                   <MinistryDetails />
                 </ChurchRouteWrapper>
               } />
-              <Route path="/igreja/:slug/blog" element={
+              
+              {/* Church blog */}
+              <Route path="/:slug/blog" element={
                 <ChurchRouteWrapper>
                   <Blog />
                 </ChurchRouteWrapper>
               } />
-              <Route path="/igreja/:slug/blog/:postSlug" element={
+              
+              {/* Church blog post */}
+              <Route path="/:slug/blog/:postSlug" element={
                 <ChurchRouteWrapper>
                   <BlogPost />
                 </ChurchRouteWrapper>
               } />
               
-              {/* ===== CHURCH ADMIN ROUTES (/igreja/:slug/admin) ===== */}
-              <Route path="/igreja/:slug/admin" element={
+              {/* ===== CHURCH ADMIN ROUTES (/:slug/admin) ===== */}
+              <Route path="/:slug/admin" element={
                 <ChurchRouteWrapper>
                   <AdminLayout />
                 </ChurchRouteWrapper>
@@ -144,56 +169,12 @@ const App = () => (
                 <Route path="temas" element={<AdminThemeSettings />} />
               </Route>
               
-              {/* ===== CHURCH MEMBER ROUTES (/igreja/:slug/membro) ===== */}
-              <Route path="/igreja/:slug/membro" element={
+              {/* ===== CHURCH MEMBER ROUTES (/:slug/membro) ===== */}
+              <Route path="/:slug/membro" element={
                 <ChurchRouteWrapper>
                   <MemberLayout />
                 </ChurchRouteWrapper>
               }>
-                <Route index element={<MemberDashboard />} />
-                <Route path="perfil" element={<MemberProfile />} />
-                <Route path="eventos" element={<MemberEvents />} />
-                <Route path="ministerios" element={<MemberMinistries />} />
-                <Route path="grupos" element={<MemberGroups />} />
-                <Route path="grupos/:ministryId" element={<MinistryChat />} />
-                <Route path="mensagens" element={<MemberDirectMessages />} />
-                <Route path="mensagens/:recipientId" element={<DirectMessageChat />} />
-                <Route path="buscar" element={<MemberSearch />} />
-                <Route path="avisos" element={<MemberBroadcasts />} />
-              </Route>
-              
-              {/* ===== LEGACY ROUTES (backward compatibility) ===== */}
-              {/* These routes maintain backward compatibility during migration */}
-              <Route path="/demo" element={<Index />} />
-              <Route path="/evento/:id" element={<EventDetails />} />
-              <Route path="/ministerio/:id" element={<MinistryDetails />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/blog/:slug" element={<BlogPost />} />
-              
-              {/* Legacy Admin Routes */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<AdminDashboard />} />
-                <Route path="secoes" element={<AdminHomeSections />} />
-                <Route path="horarios" element={<AdminSchedules />} />
-                <Route path="eventos" element={<AdminEvents />} />
-                <Route path="ministerios" element={<AdminMinistries />} />
-                <Route path="galeria" element={<AdminGallery />} />
-                <Route path="configuracoes" element={<AdminSettings />} />
-                <Route path="oracoes" element={<AdminPrayerRequests />} />
-                <Route path="mensagens" element={<AdminMessages />} />
-                <Route path="usuarios" element={<AdminUsers />} />
-                <Route path="comunicacao" element={<AdminBroadcast />} />
-                <Route path="blog" element={<AdminBlog />} />
-                <Route path="blog/estatisticas" element={<AdminBlogStats />} />
-                <Route path="blog/categorias" element={<AdminBlogCategories />} />
-                <Route path="blog/tags" element={<AdminBlogTags />} />
-                <Route path="comentarios" element={<AdminComments />} />
-                <Route path="fotos/:entityType/:entityId" element={<AdminEntityPhotos />} />
-                <Route path="temas" element={<AdminThemeSettings />} />
-              </Route>
-              
-              {/* Legacy Member Routes */}
-              <Route path="/membro" element={<MemberLayout />}>
                 <Route index element={<MemberDashboard />} />
                 <Route path="perfil" element={<MemberProfile />} />
                 <Route path="eventos" element={<MemberEvents />} />
