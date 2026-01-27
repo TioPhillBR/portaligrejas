@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { formatCNPJ, formatPhone, formatBankAgency, formatBankCode } from "@/hooks/useInputMask";
 
 interface SiteSettings {
   general: {
@@ -145,14 +146,15 @@ const AdminSettings = () => {
                   <Label>Telefone</Label>
                   <Input
                     value={settings.general.phone}
-                    onChange={(e) => setSettings({ ...settings, general: { ...settings.general, phone: e.target.value } })}
+                    onChange={(e) => setSettings({ ...settings, general: { ...settings.general, phone: formatPhone(e.target.value) } })}
+                    placeholder="(11) 99999-9999"
                   />
                 </div>
                 <div>
                   <Label>WhatsApp (com código do país)</Label>
                   <Input
                     value={settings.general.whatsapp}
-                    onChange={(e) => setSettings({ ...settings, general: { ...settings.general, whatsapp: e.target.value } })}
+                    onChange={(e) => setSettings({ ...settings, general: { ...settings.general, whatsapp: e.target.value.replace(/\D/g, "") } })}
                     placeholder="5511999999999"
                   />
                 </div>
@@ -348,13 +350,16 @@ const AdminSettings = () => {
                     <Input
                       value={settings.donations.bank_name}
                       onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_name: e.target.value } })}
+                      placeholder="Banco do Brasil"
                     />
                   </div>
                   <div>
                     <Label>Código do Banco</Label>
                     <Input
                       value={settings.donations.bank_code}
-                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_code: e.target.value } })}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, bank_code: formatBankCode(e.target.value) } })}
+                      placeholder="001"
+                      maxLength={3}
                     />
                   </div>
                 </div>
@@ -363,7 +368,8 @@ const AdminSettings = () => {
                     <Label>Agência</Label>
                     <Input
                       value={settings.donations.agency}
-                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, agency: e.target.value } })}
+                      onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, agency: formatBankAgency(e.target.value) } })}
+                      placeholder="1234-5"
                     />
                   </div>
                   <div>
@@ -371,6 +377,7 @@ const AdminSettings = () => {
                     <Input
                       value={settings.donations.account}
                       onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, account: e.target.value } })}
+                      placeholder="12345-6"
                     />
                   </div>
                 </div>
@@ -385,7 +392,8 @@ const AdminSettings = () => {
                   <Label>CNPJ</Label>
                   <Input
                     value={settings.donations.cnpj}
-                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, cnpj: e.target.value } })}
+                    onChange={(e) => setSettings({ ...settings, donations: { ...settings.donations, cnpj: formatCNPJ(e.target.value) } })}
+                    placeholder="12.345.678/0001-90"
                   />
                 </div>
               </div>

@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BlogComments from "@/components/blog/BlogComments";
 import BlogLikeButton from "@/components/blog/BlogLikeButton";
+import ReadingProgressBar from "@/components/blog/ReadingProgressBar";
 
 interface BlogTag {
   id: string;
@@ -149,6 +150,7 @@ const BlogPost = () => {
 
   return (
     <>
+      <ReadingProgressBar />
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <article className="container-custom max-w-4xl">
