@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Check, CheckCheck, Trash2, Calendar, Users, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Trash2, Calendar, Users, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -7,11 +7,12 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useInAppNotifications } from "@/hooks/useInAppNotifications";
+import { useInAppNotifications, UnifiedNotification } from "@/hooks/useInAppNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const NotificationBell = () => {
   const [open, setOpen] = useState(false);
@@ -24,8 +25,11 @@ const NotificationBell = () => {
     deleteNotification,
   } = useInAppNotifications();
 
-  const getIcon = (type: string) => {
-    switch (type) {
+  const getIcon = (notification: UnifiedNotification) => {
+    if (notification.source === "message") {
+      return <MessageSquare className="h-4 w-4" />;
+    }
+    switch (notification.type) {
       case "event":
         return <Calendar className="h-4 w-4" />;
       case "ministry":
@@ -35,7 +39,10 @@ const NotificationBell = () => {
     }
   };
 
-  const getLink = (notification: any) => {
+  const getLink = (notification: UnifiedNotification) => {
+    if (notification.source === "message" && notification.reference_id) {
+      return `/membro/mensagens/${notification.reference_id}`;
+    }
     if (notification.reference_type === "event" && notification.reference_id) {
       return `/eventos/${notification.reference_id}`;
     }
@@ -43,6 +50,16 @@ const NotificationBell = () => {
       return `/ministerios/${notification.reference_id}`;
     }
     return null;
+  };
+
+  const getIconStyles = (notification: UnifiedNotification) => {
+    if (notification.source === "message") {
+      return "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300";
+    }
+    if (notification.type === "event") {
+      return "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300";
+    }
+    return "bg-primary/10 text-primary";
   };
 
   return (
@@ -95,21 +112,28 @@ const NotificationBell = () => {
                     )}
                     onClick={() => {
                       if (!notification.is_read) {
-                        markAsRead(notification.id);
+                        markAsRead(notification.id, notification.source);
                       }
                     }}
                   >
                     <div className="flex gap-3">
-                      <div
-                        className={cn(
-                          "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                          notification.type === "event"
-                            ? "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
-                            : "bg-primary/10 text-primary"
-                        )}
-                      >
-                        {getIcon(notification.type)}
-                      </div>
+                      {notification.source === "message" && notification.sender_profile ? (
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarImage src={notification.sender_profile.avatar_url || undefined} />
+                          <AvatarFallback className="bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300">
+                            <MessageSquare className="h-4 w-4" />
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div
+                          className={cn(
+                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
+                            getIconStyles(notification)
+                          )}
+                        >
+                          {getIcon(notification)}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">
                           {notification.title}
@@ -137,37 +161,39 @@ const NotificationBell = () => {
                           className="h-6 w-6"
                           onClick={(e) => {
                             e.stopPropagation();
-                            markAsRead(notification.id);
+                            markAsRead(notification.id, notification.source);
                           }}
                         >
                           <Check className="h-3 w-3" />
                         </Button>
                       )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notification.id);
-                        }}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {notification.source === "notification" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteNotification(notification.id, notification.source);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 );
 
                 return link ? (
                   <Link
-                    key={notification.id}
+                    key={`${notification.source}-${notification.id}`}
                     to={link}
                     onClick={() => setOpen(false)}
                   >
                     {content}
                   </Link>
                 ) : (
-                  <div key={notification.id}>{content}</div>
+                  <div key={`${notification.source}-${notification.id}`}>{content}</div>
                 );
               })}
             </div>
