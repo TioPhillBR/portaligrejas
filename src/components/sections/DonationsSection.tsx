@@ -10,6 +10,7 @@ interface DonationSettings {
   pix_key?: string;
   pix_type?: string;
   pix_image_url?: string;
+  pix_copy_paste?: string;
   bank_name?: string;
   bank_code?: string;
   agency?: string;
@@ -35,6 +36,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [copiedPix, setCopiedPix] = useState(false);
+  const [copiedPixCode, setCopiedPixCode] = useState(false);
   const [settings, setSettings] = useState<DonationSettings>({});
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +66,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
 
   const pixKey = settings.pix_key || "contato@igrejaluz.com.br";
   const pixType = settings.pix_type || "email";
+  const pixCopyPaste = settings.pix_copy_paste || "";
 
   const copyPixKey = () => {
     navigator.clipboard.writeText(pixKey);
@@ -73,6 +76,16 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
       description: "Cole no seu aplicativo de banco.",
     });
     setTimeout(() => setCopiedPix(false), 3000);
+  };
+
+  const copyPixCode = () => {
+    navigator.clipboard.writeText(pixCopyPaste);
+    setCopiedPixCode(true);
+    toast({
+      title: "Código PIX copiado!",
+      description: "Cole no seu aplicativo de banco para pagar.",
+    });
+    setTimeout(() => setCopiedPixCode(false), 3000);
   };
 
   return (
@@ -137,6 +150,36 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
                     </div>
                   )}
                 </div>
+
+                {/* PIX Copy and Paste Code */}
+                {pixCopyPaste && (
+                  <div className="bg-secondary/50 rounded-lg p-4 mb-4">
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <Copy className="w-3 h-3" />
+                      PIX Copia e Cola
+                    </p>
+                    <p className="font-mono text-xs text-foreground break-all line-clamp-2">
+                      {pixCopyPaste}
+                    </p>
+                    <Button
+                      onClick={copyPixCode}
+                      className="w-full gap-2 mt-3"
+                      variant={copiedPixCode ? "outline" : "default"}
+                    >
+                      {copiedPixCode ? (
+                        <>
+                          <Check className="w-4 h-4" />
+                          Código Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-4 h-4" />
+                          Copiar Código PIX
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
 
                 {/* PIX Key */}
                 <div className="bg-secondary/50 rounded-lg p-4 mb-4">
