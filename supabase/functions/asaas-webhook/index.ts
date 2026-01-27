@@ -55,7 +55,8 @@ async function sendPaymentEmail(
   ownerInfo: OwnerInfo,
   churchName: string,
   planName?: string,
-  daysOverdue?: number
+  daysOverdue?: number,
+  slug?: string
 ) {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -73,6 +74,8 @@ async function sendPaymentEmail(
         ownerName: ownerInfo.name,
         planName,
         daysOverdue,
+        slug,
+        adminUrl: slug ? `https://portaligrejas.com.br/${slug}/admin` : undefined,
       }),
     });
 
@@ -189,7 +192,7 @@ Deno.serve(async (req) => {
     // Get church data
     const { data: church } = await supabase
       .from("churches")
-      .select("id, name, email, plan, status, owner_id, payment_overdue_at")
+      .select("id, name, email, plan, status, owner_id, payment_overdue_at, slug")
       .eq("id", churchId)
       .single();
 
@@ -287,12 +290,14 @@ Deno.serve(async (req) => {
           `Sua igreja "${church.name}" está pronta. Acesse o painel para começar.`
         );
 
-        // 5. Send confirmation email
+        // 5. Send welcome email (not just confirmation)
         await sendPaymentEmail(
-          "payment_confirmed",
+          "welcome_church",
           ownerInfo,
           church.name,
-          church.plan
+          church.plan,
+          undefined,
+          church.slug
         );
       } else if (ownerInfo) {
         // Regular payment confirmation (not first activation)

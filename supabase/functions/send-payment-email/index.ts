@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled" | "free_account_used" | "invoice_reminder_3days" | "invoice_reminder_1day";
+type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled" | "free_account_used" | "invoice_reminder_3days" | "invoice_reminder_1day" | "welcome_church";
 
 interface EmailPayload {
   type: EmailType;
@@ -17,10 +17,12 @@ interface EmailPayload {
   grantedEmail?: string;
   amount?: number;
   dueDate?: string;
+  slug?: string;
+  adminUrl?: string;
 }
 
 const getEmailTemplate = (payload: EmailPayload) => {
-  const { type, churchName, ownerName, planName, daysOverdue, grantedEmail, amount, dueDate } = payload;
+  const { type, churchName, ownerName, planName, daysOverdue, grantedEmail, amount, dueDate, slug, adminUrl } = payload;
 
   switch (type) {
     case "payment_confirmed":
@@ -291,6 +293,144 @@ const getEmailTemplate = (payload: EmailPayload) => {
             </div>
             <div class="footer">
               <p>Portal Igrejas - Seu site no ar em poucos minutos</p>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "welcome_church":
+      const siteUrl = slug ? `https://portaligrejas.com.br/${slug}` : "#";
+      const adminPanelUrl = adminUrl || (slug ? `https://portaligrejas.com.br/${slug}/admin` : "#");
+      return {
+        subject: `🎉 Bem-vindo ao Portal Igrejas - ${churchName}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; background: #f3f4f6; }
+              .header { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 40px; border-radius: 16px 16px 0 0; text-align: center; }
+              .header h1 { margin: 0; font-size: 28px; }
+              .header p { margin: 10px 0 0; opacity: 0.9; font-size: 16px; }
+              .content { background: white; padding: 40px; border-radius: 0 0 16px 16px; }
+              .welcome-box { background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); border-radius: 12px; padding: 25px; margin: 25px 0; text-align: center; }
+              .welcome-box h2 { color: #1d4ed8; margin: 0 0 10px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; margin: 10px 5px; font-weight: 600; }
+              .button.secondary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+              .steps { margin: 30px 0; }
+              .step { display: flex; align-items: flex-start; margin: 15px 0; padding: 15px; background: #f9fafb; border-radius: 8px; }
+              .step-number { background: #3b82f6; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+              .step-content { flex: 1; }
+              .step-content strong { color: #1f2937; }
+              .features { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+              .feature { background: #f0fdf4; padding: 15px; border-radius: 8px; text-align: center; }
+              .feature-icon { font-size: 24px; margin-bottom: 5px; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+              .social { margin: 20px 0; }
+              .social a { color: #3b82f6; text-decoration: none; margin: 0 10px; }
+              @media (max-width: 480px) {
+                .features { grid-template-columns: 1fr; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🎉 Bem-vindo ao Portal Igrejas!</h1>
+              <p>Sua igreja está oficialmente online</p>
+            </div>
+            <div class="content">
+              <p>Olá, <strong>${ownerName || 'Administrador'}</strong>!</p>
+              
+              <div class="welcome-box">
+                <h2>✨ ${churchName}</h2>
+                <p>Sua igreja foi ativada com o <strong>Plano ${planName ? planName.charAt(0).toUpperCase() + planName.slice(1) : 'Premium'}</strong></p>
+              </div>
+
+              <p>Estamos muito felizes em tê-lo conosco! Seu site já está no ar e pronto para receber seus membros.</p>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${adminPanelUrl}" class="button">Acessar Painel Administrativo</a>
+                <a href="${siteUrl}" class="button secondary">Ver Meu Site</a>
+              </div>
+
+              <h3 style="color: #1f2937;">📋 Próximos passos para começar:</h3>
+              
+              <div class="steps">
+                <div class="step">
+                  <div class="step-number">1</div>
+                  <div class="step-content">
+                    <strong>Adicione o logo da sua igreja</strong><br>
+                    <span style="color: #6b7280;">Personalize a identidade visual do seu site</span>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-number">2</div>
+                  <div class="step-content">
+                    <strong>Configure os horários de culto</strong><br>
+                    <span style="color: #6b7280;">Informe seus membros sobre os horários dos cultos</span>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-number">3</div>
+                  <div class="step-content">
+                    <strong>Crie seu primeiro evento</strong><br>
+                    <span style="color: #6b7280;">Divulgue os próximos eventos da sua igreja</span>
+                  </div>
+                </div>
+                <div class="step">
+                  <div class="step-number">4</div>
+                  <div class="step-content">
+                    <strong>Adicione seus ministérios</strong><br>
+                    <span style="color: #6b7280;">Apresente os ministérios e grupos da sua igreja</span>
+                  </div>
+                </div>
+              </div>
+
+              <h3 style="color: #1f2937;">🚀 Recursos disponíveis no seu plano:</h3>
+              
+              <div class="features">
+                <div class="feature">
+                  <div class="feature-icon">📅</div>
+                  <strong>Eventos</strong>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">👥</div>
+                  <strong>Ministérios</strong>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">📝</div>
+                  <strong>Blog</strong>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">🖼️</div>
+                  <strong>Galeria</strong>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">🔔</div>
+                  <strong>Notificações</strong>
+                </div>
+                <div class="feature">
+                  <div class="feature-icon">💬</div>
+                  <strong>Chat de Grupos</strong>
+                </div>
+              </div>
+
+              <p style="margin-top: 30px;">Se precisar de ajuda, nossa equipe está à disposição para auxiliar você.</p>
+              
+              <p>Que Deus abençoe o ministério de <strong>${churchName}</strong>! 🙏</p>
+            </div>
+            <div class="footer">
+              <p><strong>Portal Igrejas</strong></p>
+              <p>Seu site profissional no ar em poucos minutos</p>
+              <div class="social">
+                <a href="https://portaligrejas.com.br">Site</a> |
+                <a href="mailto:suporte@portaligrejas.com.br">Suporte</a>
+              </div>
+              <p style="font-size: 12px; color: #9ca3af;">
+                Este email foi enviado porque você cadastrou sua igreja no Portal Igrejas.
+              </p>
             </div>
           </body>
           </html>
