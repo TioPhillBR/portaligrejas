@@ -12,6 +12,7 @@ import {
   BarChart3,
   CreditCard,
   MessageSquare,
+  Ticket,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -27,6 +28,7 @@ const sidebarItems = [
   { icon: MessageSquare, label: "Tickets", href: "/plataforma/tickets" },
   { icon: Users, label: "Usuários", href: "/plataforma/usuarios" },
   { icon: CreditCard, label: "Assinaturas", href: "/plataforma/assinaturas" },
+  { icon: Ticket, label: "Cupons", href: "/plataforma/cupons" },
   { icon: BarChart3, label: "Relatórios", href: "/plataforma/relatorios" },
   { icon: Settings, label: "Configurações", href: "/plataforma/configuracoes" },
 ];

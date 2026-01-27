@@ -552,6 +552,45 @@ export type Database = {
           },
         ]
       }
+      coupon_uses: {
+        Row: {
+          church_id: string
+          coupon_id: string
+          discount_applied: number
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          church_id: string
+          coupon_id: string
+          discount_applied: number
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          church_id?: string
+          coupon_id?: string
+          discount_applied?: number
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_uses_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_uses_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "discount_coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       direct_messages: {
         Row: {
           church_id: string | null
@@ -595,6 +634,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      discount_coupons: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          current_uses: number | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean | null
+          max_uses: number | null
+          updated_at: string | null
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_uses?: number | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean | null
+          max_uses?: number | null
+          updated_at?: string | null
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
       }
       entity_photos: {
         Row: {
@@ -783,6 +870,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "gallery_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      granted_free_accounts: {
+        Row: {
+          church_id: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          is_used: boolean | null
+          notes: string | null
+          plan: string
+          used_at: string | null
+        }
+        Insert: {
+          church_id?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_used?: boolean | null
+          notes?: string | null
+          plan?: string
+          used_at?: string | null
+        }
+        Update: {
+          church_id?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          is_used?: boolean | null
+          notes?: string | null
+          plan?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "granted_free_accounts_church_id_fkey"
             columns: ["church_id"]
             isOneToOne: false
             referencedRelation: "churches"
@@ -1175,6 +1309,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_settings_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_history: {
+        Row: {
+          change_type: string
+          church_id: string
+          created_at: string | null
+          id: string
+          mrr_change: number | null
+          new_plan: string
+          old_plan: string | null
+        }
+        Insert: {
+          change_type: string
+          church_id: string
+          created_at?: string | null
+          id?: string
+          mrr_change?: number | null
+          new_plan: string
+          old_plan?: string | null
+        }
+        Update: {
+          change_type?: string
+          church_id?: string
+          created_at?: string | null
+          id?: string
+          mrr_change?: number | null
+          new_plan?: string
+          old_plan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_history_church_id_fkey"
             columns: ["church_id"]
             isOneToOne: false
             referencedRelation: "churches"

@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.send-payment-email]
 verify_jwt = false
+
+[functions.check-overdue-payments]
+verify_jwt = false

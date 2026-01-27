@@ -22,6 +22,7 @@ import {
   BarChart3,
   Tag,
   Palette,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,6 +49,7 @@ const sidebarItems = [
   { icon: Settings, label: "Configurações", href: "/admin/configuracoes" },
   { icon: Palette, label: "Temas", href: "/admin/temas" },
   { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
+  { icon: CreditCard, label: "Assinatura", href: "/admin/assinatura" },
 ];
 
 const AdminLayout = () => {
