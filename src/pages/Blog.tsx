@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobileFooter from "@/components/MobileFooter";
 import Breadcrumb from "@/components/Breadcrumb";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
 import PageTransition from "@/components/PageTransition";
@@ -131,7 +132,7 @@ const Blog = () => {
   return (
     <PageTransition>
       <Header />
-      <main className="min-h-screen pt-24 pb-16">
+      <main className="min-h-screen pt-24 pb-24 md:pb-16">
         <div className="container-custom">
           {/* Breadcrumb */}
           <Breadcrumb items={[{ label: "Blog" }]} />
@@ -381,6 +382,7 @@ const Blog = () => {
         </div>
       </main>
       <Footer />
+      <MobileFooter />
       <ScrollToTopButton />
     </PageTransition>
   );
