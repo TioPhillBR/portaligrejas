@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -63,7 +63,39 @@ const defaultDarkColors: ThemeColors = {
   "card-foreground": "0 0% 98%",
 };
 
+const applyThemeColors = (lightColors: ThemeColors, darkColors: ThemeColors) => {
+  // Create or update the dynamic theme style element
+  let styleEl = document.getElementById("dynamic-theme-colors");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "dynamic-theme-colors";
+    document.head.appendChild(styleEl);
+  }
+
+  // Generate CSS for light theme (applied to :root)
+  const lightCssVars = Object.entries(lightColors)
+    .map(([key, value]) => `--${key}: ${value};`)
+    .join("\n    ");
+
+  // Generate CSS for dark theme (applied to .dark)
+  const darkCssVars = Object.entries(darkColors)
+    .map(([key, value]) => `--${key}: ${value};`)
+    .join("\n    ");
+
+  // Apply both themes
+  styleEl.textContent = `
+:root {
+  ${lightCssVars}
+}
+.dark {
+  ${darkCssVars}
+}
+`;
+};
+
 export const useApplyTheme = () => {
+  const themeSettingsRef = useRef<ThemeSettings | null>(null);
+
   const { data: themeSettings } = useQuery({
     queryKey: ["theme-settings"],
     queryFn: async () => {
@@ -86,53 +118,27 @@ export const useApplyTheme = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  const applyTheme = useCallback(() => {
-    const lightColors = themeSettings?.light_colors || defaultLightColors;
-    const darkColors = themeSettings?.dark_colors || defaultDarkColors;
-    
-    // Create or update the dynamic theme style element
-    let styleEl = document.getElementById("dynamic-theme-colors");
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = "dynamic-theme-colors";
-      document.head.appendChild(styleEl);
-    }
-
-    // Generate CSS for light theme (applied to :root)
-    const lightCssVars = Object.entries(lightColors as ThemeColors)
-      .map(([key, value]) => `--${key}: ${value};`)
-      .join("\n    ");
-
-    // Generate CSS for dark theme (applied to .dark)
-    const darkCssVars = Object.entries(darkColors as ThemeColors)
-      .map(([key, value]) => `--${key}: ${value};`)
-      .join("\n    ");
-
-    // Apply both themes with higher specificity
-    styleEl.textContent = `
-  :root {
-    ${lightCssVars}
-  }
-  .dark {
-    ${darkCssVars}
-  }
-`;
+  // Update ref when themeSettings changes
+  useEffect(() => {
+    themeSettingsRef.current = themeSettings ?? null;
   }, [themeSettings]);
 
   // Apply theme on settings change
   useEffect(() => {
-    applyTheme();
-  }, [applyTheme]);
+    const lightColors = themeSettings?.light_colors || defaultLightColors;
+    const darkColors = themeSettings?.dark_colors || defaultDarkColors;
+    applyThemeColors(lightColors, darkColors);
+  }, [themeSettings]);
 
-  // Listen for theme toggle changes
+  // Listen for theme toggle changes (dark/light mode)
   useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === "class") {
-          // Force re-render when dark class changes
-          applyTheme();
-        }
-      });
+    const observer = new MutationObserver(() => {
+      // Re-apply when class changes (doesn't actually need to re-apply CSS, 
+      // but this ensures the styles are present)
+      const settings = themeSettingsRef.current;
+      const lightColors = settings?.light_colors || defaultLightColors;
+      const darkColors = settings?.dark_colors || defaultDarkColors;
+      applyThemeColors(lightColors, darkColors);
     });
 
     observer.observe(document.documentElement, {
@@ -141,7 +147,7 @@ export const useApplyTheme = () => {
     });
 
     return () => observer.disconnect();
-  }, [applyTheme]);
+  }, []); // Empty dependency - only set up once
 
   return { themeSettings };
 };
