@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   Users, 
@@ -8,7 +10,8 @@ import {
   Heart, 
   Clock,
   TrendingUp,
-  Eye
+  Eye,
+  HelpCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import SetupChecklist from "@/components/admin/SetupChecklist";
@@ -22,7 +25,10 @@ interface DashboardStats {
   schedules: number;
 }
 
+const TUTORIAL_COMPLETED_KEY = "admin_tutorial_completed";
+
 const AdminDashboard = () => {
+  const { slug } = useParams<{ slug: string }>();
   const [stats, setStats] = useState<DashboardStats>({
     events: 0,
     ministries: 0,
@@ -32,6 +38,13 @@ const AdminDashboard = () => {
     schedules: 0,
   });
   const [loading, setLoading] = useState(true);
+
+  const handleReopenTutorial = () => {
+    if (slug) {
+      localStorage.removeItem(`${TUTORIAL_COMPLETED_KEY}_${slug}`);
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     fetchStats();
@@ -85,13 +98,24 @@ const AdminDashboard = () => {
       <SetupChecklist />
 
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-display font-bold text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Bem-vindo ao painel administrativo da Igreja Luz do Evangelho
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-display font-bold text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Bem-vindo ao painel administrativo
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleReopenTutorial}
+          className="gap-2"
+        >
+          <HelpCircle className="h-4 w-4" />
+          <span className="hidden sm:inline">Ver Tutorial</span>
+        </Button>
       </div>
 
       {/* Stats Grid */}
