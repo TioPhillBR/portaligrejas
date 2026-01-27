@@ -23,6 +23,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationToggle } from "@/components/NotificationToggle";
+import NotificationBell from "@/components/NotificationBell";
 
 const sidebarItems = [
   { icon: Home, label: "Início", href: "/membro" },
@@ -150,6 +151,7 @@ const MemberLayout = () => {
                 {user.email}
               </span>
               <div className="flex items-center gap-1">
+                <NotificationBell />
                 <NotificationToggle />
                 <ThemeToggle />
               </div>
@@ -179,6 +181,7 @@ const MemberLayout = () => {
           </Button>
           <Logo size="sm" showText={false} />
           <div className="flex items-center gap-1">
+            <NotificationBell />
             <NotificationToggle />
             <ThemeToggle />
           </div>
