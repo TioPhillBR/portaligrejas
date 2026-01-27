@@ -35,6 +35,7 @@ import ContextualTooltip from "./ContextualTooltip";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Home, label: "Seções da Home", href: "/admin/secoes" },
   { icon: Clock, label: "Horários de Culto", href: "/admin/horarios" },
   { icon: Calendar, label: "Eventos", href: "/admin/eventos" },
