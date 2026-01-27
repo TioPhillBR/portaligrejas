@@ -12,6 +12,8 @@ import {
   ExternalLink,
   Type,
   Settings2,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import { supabase } from "@/integrations/supabase/client";
@@ -274,6 +276,109 @@ const AdminHomeSections = () => {
     updateContent("categories", categories);
   };
 
+  // Anchor validation helpers
+  const anchorToSectionMap: Record<string, { key: string; label: string }> = {
+    "#quem-somos": { key: "about", label: "Sobre / Institucional" },
+    "#cultos": { key: "services", label: "Horários de Culto" },
+    "#eventos": { key: "events", label: "Eventos" },
+    "#ministerios": { key: "ministries", label: "Ministérios" },
+    "#galeria": { key: "gallery", label: "Galeria" },
+    "#video": { key: "video", label: "Vídeo Institucional" },
+    "#radio": { key: "radio", label: "Web Rádio" },
+    "#doacoes": { key: "donations", label: "Doações" },
+    "#oracao": { key: "prayer", label: "Pedidos de Oração" },
+    "#contato": { key: "contact", label: "Contato" },
+  };
+
+  const getAvailableAnchors = () => {
+    return Object.entries(anchorToSectionMap).map(([anchor, { key, label }]) => {
+      const section = sections?.find(s => s.section_key === key);
+      return {
+        anchor,
+        label,
+        isVisible: section?.is_visible ?? false,
+      };
+    });
+  };
+
+  const validateAnchorLink = (link: string | undefined): { valid: boolean; visible: boolean; label?: string } => {
+    if (!link || !link.startsWith("#")) {
+      // External link or empty - no validation needed
+      return { valid: true, visible: true };
+    }
+    
+    const mapping = anchorToSectionMap[link];
+    if (!mapping) {
+      // Unknown anchor
+      return { valid: false, visible: false };
+    }
+    
+    const section = sections?.find(s => s.section_key === mapping.key);
+    return {
+      valid: true,
+      visible: section?.is_visible ?? false,
+      label: mapping.label,
+    };
+  };
+
+  const getAnchorValidationClass = (link: string | undefined): string => {
+    if (!link || !link.startsWith("#")) return "";
+    
+    const { valid, visible } = validateAnchorLink(link);
+    if (!valid) return "border-destructive focus-visible:ring-destructive";
+    if (!visible) return "border-amber-500 focus-visible:ring-amber-500";
+    return "border-green-500 focus-visible:ring-green-500";
+  };
+
+  const renderAnchorValidationIcon = (link: string | undefined) => {
+    if (!link || !link.startsWith("#")) return null;
+    
+    const { valid, visible } = validateAnchorLink(link);
+    
+    if (!valid) {
+      return (
+        <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-destructive" />
+      );
+    }
+    if (!visible) {
+      return (
+        <AlertTriangle className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
+      );
+    }
+    return (
+      <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+    );
+  };
+
+  const renderAnchorValidationMessage = (link: string | undefined) => {
+    if (!link || !link.startsWith("#")) return null;
+    
+    const { valid, visible, label } = validateAnchorLink(link);
+    
+    if (!valid) {
+      return (
+        <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          Âncora "{link}" não reconhecida
+        </p>
+      );
+    }
+    if (!visible) {
+      return (
+        <p className="text-xs text-amber-600 dark:text-amber-500 mt-1 flex items-center gap-1">
+          <EyeOff className="h-3 w-3" />
+          A seção "{label}" está oculta. O link não funcionará.
+        </p>
+      );
+    }
+    return (
+      <p className="text-xs text-green-600 dark:text-green-500 mt-1 flex items-center gap-1">
+        <CheckCircle2 className="h-3 w-3" />
+        Link válido para "{label}"
+      </p>
+    );
+  };
+
   const renderContentEditor = (sectionKey: string) => {
     switch (sectionKey) {
       case "hero":
@@ -324,19 +429,24 @@ const AdminHomeSections = () => {
               
               <div className="p-3 bg-muted/50 rounded-lg mb-4">
                 <p className="text-xs text-muted-foreground mb-2">
-                  <strong>Âncoras disponíveis:</strong> Use # seguido do ID da seção para links internos.
+                  <strong>Âncoras disponíveis:</strong> Clique para copiar. Seções ocultas são indicadas.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {["#quem-somos", "#cultos", "#eventos", "#ministerios", "#galeria", "#video", "#radio", "#doacoes", "#oracao", "#contato"].map((anchor) => (
+                  {getAvailableAnchors().map(({ anchor, label, isVisible }) => (
                     <code
                       key={anchor}
-                      className="px-2 py-0.5 bg-background border rounded text-xs cursor-pointer hover:bg-primary/10 transition-colors"
+                      className={`px-2 py-0.5 border rounded text-xs cursor-pointer transition-colors flex items-center gap-1 ${
+                        isVisible 
+                          ? "bg-background hover:bg-primary/10" 
+                          : "bg-destructive/10 border-destructive/30 text-destructive line-through"
+                      }`}
                       onClick={() => {
                         navigator.clipboard.writeText(anchor);
                         toast.success(`"${anchor}" copiado!`);
                       }}
-                      title="Clique para copiar"
+                      title={isVisible ? `Clique para copiar - ${label}` : `⚠️ Seção "${label}" está oculta!`}
                     >
+                      {!isVisible && <EyeOff className="h-3 w-3" />}
                       {anchor}
                     </code>
                   ))}
@@ -356,11 +466,16 @@ const AdminHomeSections = () => {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Link / Âncora</Label>
-                    <Input
-                      value={formData.content.cta_button_1_link || ""}
-                      onChange={(e) => updateContent("cta_button_1_link", e.target.value)}
-                      placeholder="Ex: #quem-somos"
-                    />
+                    <div className="relative">
+                      <Input
+                        value={formData.content.cta_button_1_link || ""}
+                        onChange={(e) => updateContent("cta_button_1_link", e.target.value)}
+                        placeholder="Ex: #quem-somos"
+                        className={getAnchorValidationClass(formData.content.cta_button_1_link)}
+                      />
+                      {renderAnchorValidationIcon(formData.content.cta_button_1_link)}
+                    </div>
+                    {renderAnchorValidationMessage(formData.content.cta_button_1_link)}
                   </div>
                 </div>
                 
@@ -376,11 +491,16 @@ const AdminHomeSections = () => {
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Link / Âncora</Label>
-                    <Input
-                      value={formData.content.cta_button_2_link || ""}
-                      onChange={(e) => updateContent("cta_button_2_link", e.target.value)}
-                      placeholder="Ex: #cultos"
-                    />
+                    <div className="relative">
+                      <Input
+                        value={formData.content.cta_button_2_link || ""}
+                        onChange={(e) => updateContent("cta_button_2_link", e.target.value)}
+                        placeholder="Ex: #cultos"
+                        className={getAnchorValidationClass(formData.content.cta_button_2_link)}
+                      />
+                      {renderAnchorValidationIcon(formData.content.cta_button_2_link)}
+                    </div>
+                    {renderAnchorValidationMessage(formData.content.cta_button_2_link)}
                   </div>
                 </div>
               </div>
