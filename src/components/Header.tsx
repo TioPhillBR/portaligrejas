@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn } from "lucide-react";
+import { Menu, X, LogIn, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
+import NotificationBell from "./NotificationBell";
+import MessagesBell from "./MessagesBell";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -22,6 +25,7 @@ const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -99,7 +103,27 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           
-          <Link to="/login">
+          {/* Notification and Messages for logged-in users */}
+          {user && (
+            <>
+              <div className={cn(
+                isScrolled
+                  ? "[&_button]:text-foreground [&_button]:hover:bg-accent/50"
+                  : "[&_button]:text-white/90 [&_button]:hover:text-white [&_button]:hover:bg-white/10"
+              )}>
+                <NotificationBell />
+              </div>
+              <div className={cn(
+                isScrolled
+                  ? "[&_button]:text-foreground [&_button]:hover:bg-accent/50"
+                  : "[&_button]:text-white/90 [&_button]:hover:text-white [&_button]:hover:bg-white/10"
+              )}>
+                <MessagesBell />
+              </div>
+            </>
+          )}
+          
+          <Link to={user ? "/membro" : "/login"}>
             <Button
               variant="ghost"
               size="icon"
@@ -109,9 +133,9 @@ const Header = () => {
                   ? "text-foreground hover:bg-accent/50"
                   : "text-white/90 hover:text-white hover:bg-white/10"
               )}
-              aria-label="Login"
+              aria-label={user ? "Área do Membro" : "Login"}
             >
-              <LogIn className="h-5 w-5" />
+              {user ? <User className="h-5 w-5" /> : <LogIn className="h-5 w-5" />}
             </Button>
           </Link>
           
