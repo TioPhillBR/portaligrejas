@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
-import MessagesBell from "./MessagesBell";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
@@ -103,24 +102,15 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           
-          {/* Notification and Messages for logged-in users */}
+          {/* Unified Notification Bell for logged-in users */}
           {user && (
-            <>
-              <div className={cn(
-                isScrolled
-                  ? "[&_button]:text-foreground [&_button]:hover:bg-accent/50"
-                  : "[&_button]:text-white/90 [&_button]:hover:text-white [&_button]:hover:bg-white/10"
-              )}>
-                <NotificationBell />
-              </div>
-              <div className={cn(
-                isScrolled
-                  ? "[&_button]:text-foreground [&_button]:hover:bg-accent/50"
-                  : "[&_button]:text-white/90 [&_button]:hover:text-white [&_button]:hover:bg-white/10"
-              )}>
-                <MessagesBell />
-              </div>
-            </>
+            <div className={cn(
+              isScrolled
+                ? "[&_button]:text-foreground [&_button]:hover:bg-accent/50"
+                : "[&_button]:text-white/90 [&_button]:hover:text-white [&_button]:hover:bg-white/10"
+            )}>
+              <NotificationBell />
+            </div>
           )}
           
           <Link to={user ? "/membro" : "/login"}>
