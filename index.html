@@ -1,24 +1,24 @@
 <!doctype html>
 <html lang="pt-BR" class="no-transitions">
-  <script>
-    // Apply saved theme immediately to prevent flash
-    (function() {
-      const saved = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.documentElement.classList.add('dark');
-      }
-      // Remove no-transitions after a brief delay
-      window.addEventListener('DOMContentLoaded', function() {
-        setTimeout(function() {
-          document.documentElement.classList.remove('no-transitions');
-        }, 100);
-      });
-    })();
-  </script>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Theme initialization script - must be in head to prevent flash -->
+    <script>
+      (function() {
+        var saved = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            document.documentElement.classList.remove('no-transitions');
+          }, 100);
+        });
+      })();
+    </script>
     
     <!-- SEO Primary Meta Tags -->
     <title>Igreja Luz do Evangelho | Transformando Vidas através do Evangelho</title>
