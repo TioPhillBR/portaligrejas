@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, Link, useLocation, useParams } from "react-router-dom";
 import {
   LayoutDashboard,
   Clock,
@@ -32,6 +32,7 @@ import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import ContextualTooltip from "./ContextualTooltip";
+import WelcomeTutorialModal from "./WelcomeTutorialModal";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -59,6 +60,7 @@ const sidebarItems = [
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { slug } = useParams<{ slug: string }>();
   const { user, loading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -196,6 +198,9 @@ const AdminLayout = () => {
 
       {/* Contextual Tooltips */}
       <ContextualTooltip />
+
+      {/* Welcome Tutorial Modal - First Access */}
+      <WelcomeTutorialModal churchSlug={slug} />
     </div>
   );
 };
