@@ -35,23 +35,23 @@ import ContextualTooltip from "./ContextualTooltip";
 import WelcomeTutorialModal from "./WelcomeTutorialModal";
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/admin", tutorialId: "dashboard" },
   { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
   { icon: Home, label: "Seções da Home", href: "/admin/secoes" },
   { icon: Clock, label: "Horários de Culto", href: "/admin/horarios" },
-  { icon: Calendar, label: "Eventos", href: "/admin/eventos" },
-  { icon: Users, label: "Ministérios", href: "/admin/ministerios" },
-  { icon: Image, label: "Galeria", href: "/admin/galeria" },
+  { icon: Calendar, label: "Eventos", href: "/admin/eventos", tutorialId: "events" },
+  { icon: Users, label: "Ministérios", href: "/admin/ministerios", tutorialId: "ministries" },
+  { icon: Image, label: "Galeria", href: "/admin/galeria", tutorialId: "gallery" },
   { icon: FileText, label: "Blog", href: "/admin/blog" },
   { icon: BarChart3, label: "Estatísticas Blog", href: "/admin/blog/estatisticas" },
   { icon: Users, label: "Categorias Blog", href: "/admin/blog/categorias" },
   { icon: Tag, label: "Tags Blog", href: "/admin/blog/tags" },
   { icon: MessageCircle, label: "Comentários", href: "/admin/comentarios" },
-  { icon: Radio, label: "Comunicação", href: "/admin/comunicacao" },
-  { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
+  { icon: Radio, label: "Comunicação", href: "/admin/comunicacao", tutorialId: "broadcast" },
+  { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens", tutorialId: "communication" },
   { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },
-  { icon: Settings, label: "Configurações", href: "/admin/configuracoes" },
-  { icon: Palette, label: "Temas", href: "/admin/temas" },
+  { icon: Settings, label: "Configurações", href: "/admin/configuracoes", tutorialId: "settings" },
+  { icon: Palette, label: "Temas", href: "/admin/temas", tutorialId: "themes" },
   { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
   { icon: CreditCard, label: "Assinatura", href: "/admin/assinatura" },
   { icon: Receipt, label: "Faturas", href: "/admin/faturas" },
@@ -129,6 +129,7 @@ const AdminLayout = () => {
                     key={item.href}
                     to={item.href}
                     onClick={() => setIsSidebarOpen(false)}
+                    data-tutorial={item.tutorialId}
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
