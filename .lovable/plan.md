@@ -1,226 +1,198 @@
 
-# Plano: Sistema de Emails de Pagamento e Suspensão Automática
+# Plano de Implementação: VAPID Keys e Correção do Wizard de Cadastro
 
-## Resumo
-Implementar notificações por email para eventos de pagamento usando Resend e expandir o webhook do Asaas para gerenciar suspensão/reativação automática de igrejas com base no status dos pagamentos.
+## Resumo das Alterações
 
-## Arquitetura da Solução
+Este plano aborda duas funcionalidades principais:
+1. **Configuração das VAPID Keys** para habilitar notificações push reais via Web Push API
+2. **Correção do fluxo do wizard de cadastro de igrejas** para seguir a jornada correta do usuário
 
-```text
-┌─────────────────┐      ┌──────────────────┐      ┌─────────────────┐
-│     Asaas       │─────▶│  asaas-webhook   │─────▶│    Supabase     │
-│   (Eventos)     │      │ (Edge Function)  │      │   (Database)    │
-└─────────────────┘      └────────┬─────────┘      └─────────────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │  send-payment   │
-                         │  -email (Nova)  │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-                         ┌─────────────────┐
-                         │     Resend      │
-                         │   (Emails)      │
-                         └─────────────────┘
-```
+---
 
-## Implementação
+## 1. Configuração das VAPID Keys
 
-### 1. Adicionar Campos de Controle de Pagamentos no Banco
-Adicionar colunas na tabela `churches` para rastrear o status de pagamentos:
+### 1.1 Adicionar Secrets no Backend
+- Adicionar as seguintes chaves como secrets do projeto:
+  - `VAPID_PUBLIC_KEY`: `BCOmRoQhm50hjCYwqhJNp699R4bokxD8cnByV3fyVzD5QKJyQPGgMclDIohLQ7Ey3QmvggJL_ASt1k2I88BlAuw`
+  - `VAPID_PRIVATE_KEY`: `1t3xL6aLgqTgQ2s4lPHGlVD6BRcaMOuD2CI3ANUicyc`
 
-```sql
--- Nova migration
-ALTER TABLE public.churches 
-ADD COLUMN IF NOT EXISTS payment_overdue_at TIMESTAMPTZ DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS asaas_subscription_id TEXT DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS asaas_customer_id TEXT DEFAULT NULL;
+### 1.2 Atualizar Hook `usePushNotifications.ts`
+- Substituir a VAPID_PUBLIC_KEY hardcoded pela chave pública fornecida
+- A chave atual no código é: `BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U`
+- Nova chave: `BCOmRoQhm50hjCYwqhJNp699R4bokxD8cnByV3fyVzD5QKJyQPGgMclDIohLQ7Ey3QmvggJL_ASt1k2I88BlAuw`
 
-COMMENT ON COLUMN public.churches.payment_overdue_at IS 'Data do primeiro pagamento em atraso';
-COMMENT ON COLUMN public.churches.asaas_subscription_id IS 'ID da assinatura no Asaas';
-COMMENT ON COLUMN public.churches.asaas_customer_id IS 'ID do cliente no Asaas';
-```
+### 1.3 Atualizar Edge Function `send-push-notification`
+- Implementar o envio real de notificações push usando a biblioteca `web-push` para Deno
+- Utilizar as VAPID keys configuradas como secrets
+- Incluir tratamento de erros e remoção de subscriptions inválidas
 
-### 2. Criar Edge Function para Envio de Emails
-Nova função `send-payment-email`:
+---
 
-```typescript
-// supabase/functions/send-payment-email/index.ts
-import { Resend } from "npm:resend@2.0.0";
+## 2. Correção do Fluxo do Wizard de Cadastro
 
-type EmailType = "payment_confirmed" | "payment_overdue" | "subscription_cancelled";
+### Fluxo Atual (Problemático)
+O wizard atual tem os seguintes problemas:
+- Cria a igreja ANTES do pagamento ser confirmado
+- Não aguarda confirmação do webhook do Asaas
+- Fluxo de passos confuso entre usuários logados e não logados
 
-interface EmailPayload {
-  type: EmailType;
-  to: string;
-  churchName: string;
-  ownerName: string;
-  planName?: string;
-  daysOverdue?: number;
-}
-
-// Templates HTML personalizados para cada tipo de email
-// - Pagamento Confirmado: Boas-vindas + detalhes do plano
-// - Pagamento em Atraso: Aviso + orientações para regularização
-// - Assinatura Cancelada: Notificação + benefícios perdidos
-```
-
-### 3. Expandir o Webhook do Asaas
-Atualizar `asaas-webhook/index.ts` para:
-
-**a) Pagamento Confirmado (`PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED`):**
-- Ativar igreja (`status: "active"`)
-- Limpar data de atraso (`payment_overdue_at: null`)
-- Atualizar plano se houver `pending_plan`
-- Enviar email de confirmação
-
-**b) Pagamento em Atraso (`PAYMENT_OVERDUE`):**
-- Registrar primeira data de atraso se não existir
-- Calcular dias em atraso
-- **Se >= 7 dias:** Suspender igreja (`status: "suspended"`)
-- Enviar email de aviso (informando dias restantes ou suspensão)
-
-**c) Assinatura Cancelada (`SUBSCRIPTION_DELETED`/`SUBSCRIPTION_INACTIVATED`):**
-- Rebaixar para plano free
-- Limpar campos de assinatura
-- Enviar email de cancelamento
-
-```typescript
-// Lógica de suspensão automática
-if (event === "PAYMENT_OVERDUE") {
-  const { data: church } = await supabase
-    .from("churches")
-    .select("payment_overdue_at, email, name, ...")
-    .eq("id", churchId)
-    .single();
-
-  let overdueDate = church.payment_overdue_at;
-  
-  if (!overdueDate) {
-    // Primeiro atraso - registrar data
-    overdueDate = new Date().toISOString();
-    await supabase.from("churches")
-      .update({ payment_overdue_at: overdueDate })
-      .eq("id", churchId);
-  }
-  
-  const daysOverdue = Math.floor(
-    (Date.now() - new Date(overdueDate).getTime()) / (1000 * 60 * 60 * 24)
-  );
-  
-  if (daysOverdue >= 7) {
-    // Suspender igreja
-    await supabase.from("churches")
-      .update({ status: "suspended" })
-      .eq("id", churchId);
-  }
-  
-  // Enviar email de atraso
-  await sendEmail("payment_overdue", { daysOverdue, ... });
-}
-```
-
-### 4. Obter Email do Owner
-Para enviar emails ao proprietário da igreja, buscar o email através de:
-1. `church.email` (email da igreja cadastrado)
-2. Se não existir, buscar o owner via `church_members` com `role = 'owner'`
-3. Usar `auth.admin.getUserById()` para obter email do Supabase Auth
-
-```typescript
-async function getOwnerEmail(supabase, churchId: string): Promise<{email: string, name: string} | null> {
-  // 1. Tentar email da igreja primeiro
-  const { data: church } = await supabase
-    .from("churches")
-    .select("email, name, owner_id")
-    .eq("id", churchId)
-    .single();
-    
-  if (church?.email) {
-    return { email: church.email, name: church.name };
-  }
-  
-  // 2. Buscar owner via church_members
-  const { data: owner } = await supabase
-    .from("church_members")
-    .select("user_id, profiles(full_name)")
-    .eq("church_id", churchId)
-    .eq("role", "owner")
-    .single();
-    
-  if (owner?.user_id) {
-    // 3. Obter email via Supabase Admin API
-    const { data: { user } } = await supabase.auth.admin.getUserById(owner.user_id);
-    return { email: user?.email, name: owner.profiles?.full_name };
-  }
-  
-  return null;
-}
-```
-
-### 5. Configuração Necessária
-
-**Secret a adicionar:**
-- `RESEND_API_KEY` - Chave da API do Resend para envio de emails
-
-**Pré-requisitos do usuário:**
-1. Criar conta em https://resend.com
-2. Validar domínio em https://resend.com/domains
-3. Criar API key em https://resend.com/api-keys
-
-### 6. Templates de Email
-
-| Tipo | Assunto | Conteúdo Principal |
-|------|---------|-------------------|
-| Pagamento Confirmado | "🎉 Pagamento confirmado - {Igreja}" | Boas-vindas, detalhes do plano ativado |
-| Pagamento em Atraso | "⚠️ Pagamento pendente - {Igreja}" | Aviso, dias restantes antes da suspensão |
-| Igreja Suspensa | "🚫 Igreja suspensa - {Igreja}" | Notificação, instruções para regularizar |
-| Assinatura Cancelada | "📋 Assinatura cancelada - {Igreja}" | Confirmação, plano rebaixado para free |
-
-## Fluxo de Eventos
+### Novo Fluxo Proposto
 
 ```text
-PAGAMENTO_CONFIRMADO
-    ├── Ativar igreja (status: active)
-    ├── Limpar payment_overdue_at
-    ├── Aplicar pending_plan se existir
-    └── Enviar email de confirmação ✉️
+USUÁRIO NÃO CADASTRADO:
+┌──────────────────────────────────────────────────────────────────┐
+│ Landing Page                                                      │
+│ └─> Verificar disponibilidade do slug                            │
+│     └─> Clicar "Criar meu site Agora"                            │
+│         └─> Wizard Passo 1: Cadastrar usuário                    │
+│             └─> Wizard Passo 2: Escolher plano + Checkout Asaas  │
+│                 └─> Webhook confirma pagamento                    │
+│                     └─> Wizard Passo 3: Cadastrar igreja         │
+│                         └─> Atribuir role church_owner           │
+│                             └─> Redirecionar para admin          │
+└──────────────────────────────────────────────────────────────────┘
 
-PAGAMENTO_EM_ATRASO
-    ├── Registrar payment_overdue_at (se primeiro atraso)
-    ├── Calcular dias em atraso
-    ├── SE dias >= 7: Suspender (status: suspended)
-    └── Enviar email de aviso ✉️
-
-ASSINATURA_CANCELADA
-    ├── Rebaixar para free
-    ├── Limpar campos Asaas
-    └── Enviar email de cancelamento ✉️
+USUÁRIO JÁ CADASTRADO:
+┌──────────────────────────────────────────────────────────────────┐
+│ Landing Page                                                      │
+│ └─> Fazer login                                                  │
+│     └─> Verificar disponibilidade do slug                        │
+│         └─> Clicar "Criar meu site Agora"                        │
+│             └─> Wizard Passo 2: Escolher plano + Checkout Asaas  │
+│                 └─> Webhook confirma pagamento                    │
+│                     └─> Wizard Passo 3: Cadastrar igreja         │
+│                         └─> Atribuir role church_owner           │
+│                             └─> Redirecionar para admin          │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-## Arquivos a Modificar/Criar
+### 2.1 Reestruturar `ChurchWizard.tsx`
+Modificações necessárias:
 
-| Arquivo | Ação |
-|---------|------|
-| `supabase/migrations/xxx.sql` | Criar - campos de controle |
-| `supabase/functions/send-payment-email/index.ts` | Criar - envio de emails |
-| `supabase/functions/asaas-webhook/index.ts` | Modificar - lógica expandida |
-| `supabase/config.toml` | Modificar - registrar nova função |
+**Novo Fluxo de Passos:**
+- **Passo 1 (apenas não logados)**: Cadastro do usuário
+- **Passo 2**: Seleção do plano e redirecionamento para checkout do Asaas
+- **Passo 3**: Cadastro da igreja (só acessível após pagamento confirmado)
+
+**Estado Pendente de Pagamento:**
+- Salvar dados do wizard em `localStorage` antes do checkout
+- Incluir `slug` nos dados persistidos
+- Após retorno do Asaas, verificar status do pagamento via parâmetro URL ou polling
+
+### 2.2 Atualizar Componente `WizardStepPlan.tsx`
+- Ao selecionar plano, ir para checkout imediatamente (não para passo 3)
+- Para contas gratuitas pré-aprovadas, pular checkout e ir direto para cadastro da igreja
+
+### 2.3 Modificar Fluxo de Checkout
+O checkout atual (`Checkout.tsx`) exige que a igreja já exista. Novo fluxo:
+
+**Opção A - Checkout Integrado no Wizard:**
+- Incorporar formulário de checkout (dados do cliente) diretamente no `WizardStepPlan`
+- Gerar link de pagamento Asaas sem criar a igreja primeiro
+- Usar `externalReference` com dados temporários (user_id + slug + timestamp)
+- Após pagamento confirmado, permitir criação da igreja
+
+**Opção B - Criar Igreja Pendente:**
+- Criar igreja com `status: 'pending_payment'` 
+- Usar church_id como referência no Asaas
+- Webhook atualiza status para 'active' após pagamento
+
+Recomendação: **Opção B** é mais simples e mantém compatibilidade com o fluxo atual do webhook.
+
+### 2.4 Novo Status de Igreja
+Adicionar suporte para status `pending_payment`:
+- Igreja criada mas pagamento não confirmado
+- Não aparece em listagens públicas
+- Se pagamento não confirmado em X dias, igreja é removida
+
+### 2.5 Modificar `asaas-webhook/index.ts`
+Quando `PAYMENT_CONFIRMED`:
+- Atualizar status da igreja de `pending_payment` para `active`
+- Atribuir role `church_owner` ao usuário (owner_id da igreja)
+- Enviar notificações configuradas
+
+### 2.6 Atualizar `LandingHero.tsx`
+- Modificar botão "Criar meu site agora" para redirecionar ao wizard com o slug
+- Para usuários logados, redirecionar direto para `/criar-igreja/wizard?slug=xxx`
+- Para não logados, mesmo comportamento atual
+
+### 2.7 Persistência de Dados do Wizard
+O wizard já salva em `localStorage`, mas precisa incluir:
+- Slug escolhido na landing page
+- Plano selecionado
+- Dados do usuário (para pré-preencher após login)
+- Status do pagamento (pendente/confirmado)
+
+### 2.8 Página de Retorno do Checkout
+Criar/modificar `CheckoutSuccess.tsx` para:
+- Verificar se igreja foi ativada (polling ou realtime)
+- Se ativada, redirecionar para Passo 3 do wizard (cadastro da igreja)
+- Se já cadastrada, redirecionar para admin
+
+---
+
+## Arquivos a Modificar
+
+| Arquivo | Alteração |
+|---------|-----------|
+| `src/hooks/usePushNotifications.ts` | Atualizar VAPID_PUBLIC_KEY |
+| `supabase/functions/send-push-notification/index.ts` | Implementar envio real de push |
+| `src/pages/onboarding/ChurchWizard.tsx` | Reestruturar fluxo de passos |
+| `src/components/onboarding/WizardStepPlan.tsx` | Integrar checkout no passo |
+| `src/components/onboarding/WizardStepChurch.tsx` | Verificar pagamento antes de exibir |
+| `src/components/landing/LandingHero.tsx` | Passar slug para wizard |
+| `supabase/functions/asaas-webhook/index.ts` | Adicionar lógica de role + notificações |
+| `src/pages/CheckoutSuccess.tsx` | Verificar status e redirecionar |
+
+## Novos Arquivos
+
+| Arquivo | Descrição |
+|---------|-----------|
+| `src/components/onboarding/WizardStepCheckout.tsx` | Formulário de checkout integrado (se opção A) |
+
+---
 
 ## Detalhes Técnicos
 
-### RLS e Segurança
-- A edge function usa `SUPABASE_SERVICE_ROLE_KEY` para bypass de RLS
-- Email enviado apenas para o owner/email cadastrado da igreja
-- Webhook do Asaas deve ter `verify_jwt = false` (já configurado)
+### Implementação do Web Push (Edge Function)
 
-### Tratamento de Erros
-- Logs detalhados para cada evento processado
-- Fallback se email não puder ser enviado (não bloqueia o webhook)
-- Retry automático do Asaas em caso de falha 5xx
+A edge function precisará usar uma implementação de Web Push para Deno. Exemplo de estrutura:
 
-### Reativação Automática
-Quando um pagamento atrasado é regularizado:
-- `PAYMENT_CONFIRMED` limpa `payment_overdue_at`
-- Igreja volta para `status: "active"`
-- Email de confirmação é enviado
+```typescript
+// Usando jose para JWT e crypto para assinatura
+import * as jose from "https://deno.land/x/jose@v4.14.4/index.ts";
+
+async function sendWebPush(subscription, payload, vapidKeys) {
+  // 1. Gerar JWT para autorização VAPID
+  // 2. Criptografar payload com chaves da subscription
+  // 3. Fazer POST para endpoint da subscription
+}
+```
+
+### Atribuição de Role church_owner
+
+Adicionar no webhook após pagamento confirmado:
+
+```typescript
+// Adicionar role church_owner ao owner
+await supabase.from("user_roles").upsert({
+  user_id: church.owner_id,
+  role: "church_owner"
+}, { onConflict: "user_id,role" });
+```
+
+### Verificação de Pagamento no Wizard
+
+O wizard verificará se o pagamento foi confirmado através de:
+1. Parâmetro `?payment=success` na URL de retorno
+2. Consulta ao status da igreja no banco de dados
+
+---
+
+## Próximos Passos Após Implementação
+
+1. Testar fluxo completo com usuário não logado
+2. Testar fluxo com usuário já logado
+3. Testar cenário de conta gratuita pré-aprovada
+4. Verificar recebimento de notificações push reais
+5. Validar tratamento de erros (pagamento falhou, timeout, etc.)
