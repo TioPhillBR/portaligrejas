@@ -314,40 +314,75 @@ const AdminHomeSections = () => {
                 progress={progress}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Botão 1 - Texto</Label>
-                <Input
-                  value={formData.content.cta_button_1_text || ""}
-                  onChange={(e) => updateContent("cta_button_1_text", e.target.value)}
-                  placeholder="Ex: Conheça Nossa Igreja"
-                />
+            
+            {/* CTA Buttons Section */}
+            <div className="border-t pt-4 mt-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings2 className="h-4 w-4 text-muted-foreground" />
+                <Label className="font-medium">Botões de Ação (CTA)</Label>
               </div>
-              <div className="space-y-2">
-                <Label>Botão 1 - Link</Label>
-                <Input
-                  value={formData.content.cta_button_1_link || ""}
-                  onChange={(e) => updateContent("cta_button_1_link", e.target.value)}
-                  placeholder="Ex: #about"
-                />
+              
+              <div className="p-3 bg-muted/50 rounded-lg mb-4">
+                <p className="text-xs text-muted-foreground mb-2">
+                  <strong>Âncoras disponíveis:</strong> Use # seguido do ID da seção para links internos.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["#quem-somos", "#cultos", "#eventos", "#ministerios", "#galeria", "#video", "#radio", "#doacoes", "#oracao", "#contato"].map((anchor) => (
+                    <code
+                      key={anchor}
+                      className="px-2 py-0.5 bg-background border rounded text-xs cursor-pointer hover:bg-primary/10 transition-colors"
+                      onClick={() => {
+                        navigator.clipboard.writeText(anchor);
+                        toast.success(`"${anchor}" copiado!`);
+                      }}
+                      title="Clique para copiar"
+                    >
+                      {anchor}
+                    </code>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Botão 2 - Texto</Label>
-                <Input
-                  value={formData.content.cta_button_2_text || ""}
-                  onChange={(e) => updateContent("cta_button_2_text", e.target.value)}
-                  placeholder="Ex: Nossos Horários"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Botão 2 - Link</Label>
-                <Input
-                  value={formData.content.cta_button_2_link || ""}
-                  onChange={(e) => updateContent("cta_button_2_link", e.target.value)}
-                  placeholder="Ex: #services"
-                />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3 p-3 border rounded-lg">
+                  <Label className="text-sm font-medium">Botão Principal</Label>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Texto</Label>
+                    <Input
+                      value={formData.content.cta_button_1_text || ""}
+                      onChange={(e) => updateContent("cta_button_1_text", e.target.value)}
+                      placeholder="Ex: Conheça Nossa Igreja"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Link / Âncora</Label>
+                    <Input
+                      value={formData.content.cta_button_1_link || ""}
+                      onChange={(e) => updateContent("cta_button_1_link", e.target.value)}
+                      placeholder="Ex: #quem-somos"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-3 p-3 border rounded-lg">
+                  <Label className="text-sm font-medium">Botão Secundário</Label>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Texto</Label>
+                    <Input
+                      value={formData.content.cta_button_2_text || ""}
+                      onChange={(e) => updateContent("cta_button_2_text", e.target.value)}
+                      placeholder="Ex: Nossos Horários"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Link / Âncora</Label>
+                    <Input
+                      value={formData.content.cta_button_2_link || ""}
+                      onChange={(e) => updateContent("cta_button_2_link", e.target.value)}
+                      placeholder="Ex: #cultos"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
