@@ -11,6 +11,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PhotoGallery from "@/components/PhotoGallery";
 import RSVPButton from "@/components/RSVPButton";
+import Breadcrumb from "@/components/Breadcrumb";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -104,14 +106,13 @@ const EventDetails = () => {
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
-          {/* Back Button */}
-          <Link
-            to="/#eventos"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para Eventos
-          </Link>
+          {/* Breadcrumb */}
+          <Breadcrumb 
+            items={[
+              { label: "Eventos", href: "/#eventos" },
+              { label: event.title }
+            ]} 
+          />
 
           {/* Hero Image */}
           {event.image_url && (
@@ -243,6 +244,7 @@ const EventDetails = () => {
         </div>
       </main>
       <Footer />
+      <ScrollToTopButton />
     </>
   );
 };
