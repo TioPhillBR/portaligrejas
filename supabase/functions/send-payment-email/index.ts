@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled";
+type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled" | "free_account_used";
 
 interface EmailPayload {
   type: EmailType;
@@ -14,10 +14,11 @@ interface EmailPayload {
   ownerName: string;
   planName?: string;
   daysOverdue?: number;
+  grantedEmail?: string;
 }
 
 const getEmailTemplate = (payload: EmailPayload) => {
-  const { type, churchName, ownerName, planName, daysOverdue } = payload;
+  const { type, churchName, ownerName, planName, daysOverdue, grantedEmail } = payload;
 
   switch (type) {
     case "payment_confirmed":
@@ -173,6 +174,44 @@ const getEmailTemplate = (payload: EmailPayload) => {
             </div>
             <div class="footer">
               <p>Portal Igrejas - Seu site no ar em poucos minutos</p>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "free_account_used":
+      return {
+        subject: `🎁 Conta gratuita utilizada - ${grantedEmail}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
+              .info { background: #ede9fe; border-left: 4px solid #8b5cf6; padding: 15px; margin: 20px 0; border-radius: 4px; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🎁 Conta Gratuita Utilizada</h1>
+            </div>
+            <div class="content">
+              <p>Olá, Administrador!</p>
+              <div class="info">
+                <p><strong>Email:</strong> ${grantedEmail}</p>
+                <p><strong>Igreja criada:</strong> ${churchName}</p>
+                <p><strong>Plano concedido:</strong> ${planName?.charAt(0).toUpperCase()}${planName?.slice(1) || 'Prata'}</p>
+              </div>
+              <p>Uma conta gratuita que você provisionou foi utilizada com sucesso.</p>
+              <p>A igreja já está ativa com o plano concedido.</p>
+            </div>
+            <div class="footer">
+              <p>Portal Igrejas - Notificação Administrativa</p>
             </div>
           </body>
           </html>

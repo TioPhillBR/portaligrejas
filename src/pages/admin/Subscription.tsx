@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Crown, Star, Zap, CreditCard, AlertTriangle, CheckCircle, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Crown, Star, Zap, CreditCard, AlertTriangle, CheckCircle, Loader2, ArrowUpRight, ArrowDownRight, Ticket, X, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useChurch } from "@/contexts/ChurchContext";
 import { toast } from "sonner";
@@ -58,6 +60,10 @@ const AdminSubscription = () => {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponValidating, setCouponValidating] = useState(false);
+  const [couponValid, setCouponValid] = useState<boolean | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState<{ type: string; value: number } | null>(null);
 
   useEffect(() => {
     if (church?.id) {
@@ -83,6 +89,76 @@ const AdminSubscription = () => {
     }
   };
 
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    
+    setCouponValidating(true);
+    setCouponValid(null);
+    
+    try {
+      const { data: coupon, error } = await supabase
+        .from("discount_coupons")
+        .select("*")
+        .eq("code", couponCode.toUpperCase().trim())
+        .eq("is_active", true)
+        .single();
+
+      if (error || !coupon) {
+        setCouponValid(false);
+        setCouponDiscount(null);
+        toast.error("Cupom inválido ou expirado");
+        return;
+      }
+
+      // Check validity dates
+      const now = new Date();
+      if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+        setCouponValid(false);
+        toast.error("Cupom ainda não está válido");
+        return;
+      }
+
+      if (coupon.valid_until && new Date(coupon.valid_until) < now) {
+        setCouponValid(false);
+        toast.error("Cupom expirado");
+        return;
+      }
+
+      if (coupon.max_uses !== null && coupon.current_uses >= coupon.max_uses) {
+        setCouponValid(false);
+        toast.error("Cupom esgotado");
+        return;
+      }
+
+      setCouponValid(true);
+      setCouponDiscount({
+        type: coupon.discount_type,
+        value: coupon.discount_value,
+      });
+      toast.success(`Cupom válido! ${coupon.discount_type === 'percentage' ? `${coupon.discount_value}% de desconto` : `R$ ${coupon.discount_value.toFixed(2)} de desconto`}`);
+    } catch (error) {
+      setCouponValid(false);
+      toast.error("Erro ao validar cupom");
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+
+  const clearCoupon = () => {
+    setCouponCode("");
+    setCouponValid(null);
+    setCouponDiscount(null);
+  };
+
+  const calculateDiscountedPrice = (originalPrice: number) => {
+    if (!couponDiscount) return originalPrice;
+    
+    if (couponDiscount.type === "percentage") {
+      return originalPrice * (1 - couponDiscount.value / 100);
+    }
+    return Math.max(0, originalPrice - couponDiscount.value);
+  };
+
   const handleChangePlan = async (newPlan: string) => {
     if (!churchData) return;
 
@@ -93,21 +169,35 @@ const AdminSubscription = () => {
       // Para upgrade, redirecionar para checkout
       setProcessing(true);
       try {
+        const { data: session } = await supabase.auth.getSession();
+        
         const response = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/asaas-checkout`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.session?.access_token}`,
+            },
             body: JSON.stringify({
               churchId: churchData.id,
               plan: newPlan,
+              customerName: churchData.name,
+              customerEmail: churchData.email || "",
+              customerCpfCnpj: "",
+              successUrl: window.location.href,
+              cancelUrl: window.location.href,
+              couponCode: couponValid ? couponCode.toUpperCase().trim() : undefined,
             }),
           }
         );
 
         const result = await response.json();
-        if (result.checkoutUrl) {
-          window.open(result.checkoutUrl, "_blank");
+        if (result.paymentLink) {
+          if (result.discountApplied) {
+            toast.success(`Cupom aplicado! Desconto de R$ ${result.discountApplied.toFixed(2)}`);
+          }
+          window.open(result.paymentLink, "_blank");
           toast.success("Redirecionando para o checkout...");
         } else {
           throw new Error(result.error || "Erro ao gerar checkout");
@@ -118,6 +208,7 @@ const AdminSubscription = () => {
       } finally {
         setProcessing(false);
         setChangePlanDialog(false);
+        clearCoupon();
       }
     } else {
       // Para downgrade, agendar para próximo ciclo
@@ -401,11 +492,81 @@ const AdminSubscription = () => {
           )}
 
           {selectedPlan && (
-            <div className="py-4">
+            <div className="py-4 space-y-4">
               <p className="text-center">
                 Confirmar mudança para o plano{" "}
                 <strong>{PLANS[selectedPlan].name}</strong>?
               </p>
+
+              {PLANS[selectedPlan].price > currentPlan.price && (
+                <div className="space-y-3 p-4 bg-muted rounded-lg">
+                  <Label htmlFor="couponCode" className="flex items-center gap-2">
+                    <Ticket className="h-4 w-4" />
+                    Cupom de Desconto (opcional)
+                  </Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="couponCode"
+                        placeholder="Digite o código"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value.toUpperCase());
+                          setCouponValid(null);
+                        }}
+                        className="uppercase"
+                      />
+                      {couponValid !== null && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {couponValid ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <X className="h-4 w-4 text-red-500" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={validateCoupon}
+                      disabled={!couponCode.trim() || couponValidating}
+                    >
+                      {couponValidating ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "Aplicar"
+                      )}
+                    </Button>
+                    {couponValid && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={clearCoupon}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  {couponValid && couponDiscount && (
+                    <div className="text-sm space-y-1">
+                      <p className="text-green-600 dark:text-green-400">
+                        ✓ Desconto: {couponDiscount.type === 'percentage' 
+                          ? `${couponDiscount.value}%` 
+                          : `R$ ${couponDiscount.value.toFixed(2).replace(".", ",")}`
+                        }
+                      </p>
+                      <p className="text-muted-foreground">
+                        Valor original: <span className="line-through">R$ {PLANS[selectedPlan].price.toFixed(2).replace(".", ",")}</span>
+                      </p>
+                      <p className="font-semibold">
+                        Valor com desconto: R$ {calculateDiscountedPrice(PLANS[selectedPlan].price).toFixed(2).replace(".", ",")}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
