@@ -498,6 +498,7 @@ export type Database = {
           time: string | null
           title: string
           updated_at: string
+          view_count: number | null
         }
         Insert: {
           category?: string | null
@@ -514,6 +515,7 @@ export type Database = {
           time?: string | null
           title: string
           updated_at?: string
+          view_count?: number | null
         }
         Update: {
           category?: string | null
@@ -530,6 +532,7 @@ export type Database = {
           time?: string | null
           title?: string
           updated_at?: string
+          view_count?: number | null
         }
         Relationships: []
       }
@@ -912,6 +915,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_event_views: { Args: { event_id: string }; Returns: undefined }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
       is_ministry_member: {
         Args: { _ministry_id: string; _user_id: string }

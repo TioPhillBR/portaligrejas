@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, GripVertical } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Pencil, Trash2, GripVertical, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -327,6 +329,16 @@ const AdminMinistries = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Link to={`/admin/fotos/ministry/${ministry.id}`}>
+                          <Button variant="ghost" size="icon">
+                            <ImageIcon className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </TooltipTrigger>
+                      <TooltipContent>Gerenciar Fotos</TooltipContent>
+                    </Tooltip>
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(ministry)}>
                       <Pencil className="w-4 h-4" />
                     </Button>

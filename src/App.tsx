@@ -25,6 +25,7 @@ import AdminBlogCategories from "./pages/admin/BlogCategories";
 import AdminBlogTags from "./pages/admin/BlogTags";
 import AdminComments from "./pages/admin/Comments";
 import AdminHomeSections from "./pages/admin/HomeSections";
+import AdminEntityPhotos from "./pages/admin/EntityPhotos";
 import EventDetails from "./pages/EventDetails";
 import MinistryDetails from "./pages/MinistryDetails";
 import Blog from "./pages/Blog";
@@ -79,6 +80,7 @@ const App = () => (
               <Route path="blog/categorias" element={<AdminBlogCategories />} />
               <Route path="blog/tags" element={<AdminBlogTags />} />
               <Route path="comentarios" element={<AdminComments />} />
+              <Route path="fotos/:entityType/:entityId" element={<AdminEntityPhotos />} />
             </Route>
             
             {/* Member Routes */}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Star, Calendar } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Pencil, Trash2, Star, Calendar, Eye, Users, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import ImageUpload from "@/components/admin/ImageUpload";
+import EventStatsCard from "@/components/admin/EventStatsCard";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -27,6 +30,8 @@ interface Event {
   image_url: string | null;
   is_featured: boolean;
   is_active: boolean;
+  view_count: number;
+  rsvp_count?: number;
 }
 
 const AdminEvents = () => {
@@ -152,6 +157,9 @@ const AdminEvents = () => {
 
   return (
     <div className="space-y-6">
+      {/* Stats Cards */}
+      <EventStatsCard />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Eventos</h1>
@@ -300,9 +308,30 @@ const AdminEvents = () => {
                           {format(new Date(event.date), "dd 'de' MMMM, yyyy", { locale: ptBR })}
                           {event.time && ` às ${event.time}`}
                         </div>
-                        <Badge variant="secondary" className="mt-2">{event.category}</Badge>
+                        <div className="flex items-center gap-3 mt-2">
+                          <Badge variant="secondary">{event.category}</Badge>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Eye className="w-3 h-3" />
+                                {event.view_count || 0}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>Visualizações</TooltipContent>
+                          </Tooltip>
+                        </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Link to={`/admin/fotos/event/${event.id}`}>
+                              <Button variant="ghost" size="icon">
+                                <ImageIcon className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                          </TooltipTrigger>
+                          <TooltipContent>Gerenciar Fotos</TooltipContent>
+                        </Tooltip>
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(event)}>
                           <Pencil className="w-4 h-4" />
                         </Button>

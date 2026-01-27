@@ -25,6 +25,12 @@ const EventDetails = () => {
         .maybeSingle();
 
       if (error) throw error;
+      
+      // Increment view count
+      if (data) {
+        supabase.rpc("increment_event_views", { event_id: id }).then();
+      }
+      
       return data;
     },
     enabled: !!id,
