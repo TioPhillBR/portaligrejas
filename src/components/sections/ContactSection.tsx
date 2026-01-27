@@ -6,31 +6,55 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-const contactInfo = [
+interface ContactSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      badge?: string;
+      map_embed_url?: string;
+      info?: Array<{
+        icon: string;
+        title: string;
+        content: string;
+      }>;
+    };
+  };
+}
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  MapPin,
+  Phone,
+  Mail,
+  Clock,
+};
+
+const defaultContactInfo = [
   {
-    icon: MapPin,
+    icon: "MapPin",
     title: "Endereço",
     content: "Rua da Paz, 123 - Centro\nSão Paulo - SP, 01000-000",
   },
   {
-    icon: Phone,
+    icon: "Phone",
     title: "Telefone",
     content: "(11) 3456-7890\n(11) 99876-5432",
   },
   {
-    icon: Mail,
+    icon: "Mail",
     title: "E-mail",
     content: "contato@igrejaluz.com.br\nsecretaria@igrejaluz.com.br",
   },
   {
-    icon: Clock,
+    icon: "Clock",
     title: "Atendimento",
     content: "Segunda a Sexta: 9h às 18h\nSábado: 9h às 12h",
   },
 ];
 
-const ContactSection = () => {
+const ContactSection = ({ sectionData }: ContactSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   
@@ -42,6 +66,13 @@ const ContactSection = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const content = sectionData?.content || {};
+  const badge = content.badge || "Fale Conosco";
+  const title = sectionData?.title || "Entre em Contato";
+  const subtitle = sectionData?.subtitle || "Estamos aqui para ajudar você. Entre em contato conosco por qualquer um dos canais abaixo.";
+  const mapEmbedUrl = content.map_embed_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.0976951333286!2d-46.65342492378925!3d-23.564611261666665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1706000000000!5m2!1spt-BR!2sbr";
+  const contactInfo = content.info && content.info.length > 0 ? content.info : defaultContactInfo;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -50,15 +81,29 @@ const ContactSection = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { error } = await supabase
+      .from("contact_messages")
+      .insert({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        message: formData.message,
+      });
 
-    toast({
-      title: "Mensagem enviada!",
-      description: "Entraremos em contato em breve.",
-    });
+    if (error) {
+      toast({
+        title: "Erro ao enviar",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Mensagem enviada!",
+        description: "Entraremos em contato em breve.",
+      });
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    }
 
-    setFormData({ name: "", email: "", phone: "", message: "" });
     setIsSubmitting(false);
   };
 
@@ -74,14 +119,19 @@ const ContactSection = () => {
         >
           <span className="inline-block px-4 py-1 mb-4 rounded-full bg-gold/10 text-gold text-sm font-medium">
             <Mail className="w-4 h-4 inline mr-2" />
-            Fale Conosco
+            {badge}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4">
-            Entre em <span className="text-gold">Contato</span>
+            {title.includes(" ") ? (
+              <>
+                {title.split(" ").slice(0, -1).join(" ")} <span className="text-gold">{title.split(" ").slice(-1)}</span>
+              </>
+            ) : (
+              <span className="text-gold">{title}</span>
+            )}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Estamos aqui para ajudar você. Entre em contato conosco por qualquer
-            um dos canais abaixo.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -94,7 +144,7 @@ const ContactSection = () => {
           >
             <div className="grid sm:grid-cols-2 gap-6 mb-8">
               {contactInfo.map((info, index) => {
-                const Icon = info.icon;
+                const Icon = iconMap[info.icon] || Mail;
                 return (
                   <Card key={index} className="border-border/50">
                     <CardContent className="p-6">
@@ -120,7 +170,7 @@ const ContactSection = () => {
             {/* Map */}
             <div className="rounded-xl overflow-hidden h-64 bg-muted">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.0976951333286!2d-46.65342492378925!3d-23.564611261666665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1706000000000!5m2!1spt-BR!2sbr"
+                src={mapEmbedUrl}
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
