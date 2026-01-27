@@ -877,6 +877,33 @@ export type Database = {
         }
         Relationships: []
       }
+      theme_settings: {
+        Row: {
+          active_theme: string
+          dark_colors: Json
+          id: string
+          light_colors: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active_theme?: string
+          dark_colors?: Json
+          id?: string
+          light_colors?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active_theme?: string
+          dark_colors?: Json
+          id?: string
+          light_colors?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

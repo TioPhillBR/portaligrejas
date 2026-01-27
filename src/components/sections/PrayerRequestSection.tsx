@@ -12,7 +12,10 @@ interface PrayerRequestSectionProps {
     title: string | null;
     subtitle: string | null;
     content: {
-      description?: string;
+      badge?: string;
+      placeholder?: string;
+      bible_verse?: string;
+      bible_reference?: string;
     };
   };
 }
@@ -23,9 +26,13 @@ const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
   const [prayerRequest, setPrayerRequest] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const content = sectionData?.content || {};
+  const badge = content.badge || "Pedido de Oração";
   const title = sectionData?.title || "Pedido de Oração";
-  const description = sectionData?.content?.description || 
-    "Compartilhe seu pedido conosco. Nossa equipe de intercessores estará orando por você. Seu pedido é confidencial.";
+  const subtitle = sectionData?.subtitle || "Compartilhe seu pedido conosco. Nossa equipe de intercessores estará orando por você. Seu pedido é confidencial.";
+  const placeholder = content.placeholder || "Escreva aqui o seu pedido de oração...";
+  const bibleVerse = content.bible_verse || '"Confessai as vossas culpas uns aos outros, e orai uns pelos outros, para que sareis."';
+  const bibleReference = content.bible_reference || "Tiago 5:16";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,14 +74,15 @@ const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
               <CardContent className="p-8 md:p-12">
                 {/* Header */}
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Heart className="w-8 h-8 text-primary" />
-                  </div>
+                  <span className="inline-block px-4 py-1 mb-4 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    <Heart className="w-4 h-4 inline mr-2" />
+                    {badge}
+                  </span>
                   <h2 className="text-2xl md:text-3xl font-display font-bold text-foreground mb-2">
                     {title}
                   </h2>
                   <p className="text-muted-foreground">
-                    {description}
+                    {subtitle}
                   </p>
                 </div>
 
@@ -83,7 +91,7 @@ const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
                   <Textarea
                     value={prayerRequest}
                     onChange={(e) => setPrayerRequest(e.target.value)}
-                    placeholder="Escreva aqui o seu pedido de oração..."
+                    placeholder={placeholder}
                     rows={5}
                     className="resize-none bg-background"
                     required
@@ -110,8 +118,7 @@ const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
 
                 {/* Bible Verse */}
                 <p className="text-center text-sm text-muted-foreground mt-6 italic">
-                  "Confessai as vossas culpas uns aos outros, e orai uns pelos
-                  outros, para que sareis." - Tiago 5:16
+                  {bibleVerse} - {bibleReference}
                 </p>
               </CardContent>
             </Card>

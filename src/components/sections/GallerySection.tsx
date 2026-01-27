@@ -1,30 +1,68 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { Camera, X } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const galleryImages = [
-  { id: 1, src: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=600&h=400&fit=crop", alt: "Culto de Adoração", category: "Cultos" },
-  { id: 2, src: "https://images.unsplash.com/photo-1519491050282-cf00c82424ca?w=600&h=400&fit=crop", alt: "Batismo nas Águas", category: "Batismos" },
-  { id: 3, src: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?w=600&h=400&fit=crop", alt: "Encontro de Jovens", category: "Eventos" },
-  { id: 4, src: "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=600&h=400&fit=crop", alt: "Louvor e Adoração", category: "Cultos" },
-  { id: 5, src: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&h=400&fit=crop", alt: "Ministério de Louvor", category: "Cultos" },
-  { id: 6, src: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=600&h=400&fit=crop", alt: "Família na Igreja", category: "Eventos" },
-  { id: 7, src: "https://images.unsplash.com/photo-1559582798-678dfc71ccd8?w=600&h=400&fit=crop", alt: "Oração em Grupo", category: "Cultos" },
-  { id: 8, src: "https://images.unsplash.com/photo-1523301343968-6a6ebf63c672?w=600&h=400&fit=crop", alt: "Evento Especial", category: "Eventos" },
-];
+interface GallerySectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      badge?: string;
+      items_per_page?: number;
+      categories?: string[];
+    };
+  };
+}
 
-const categories = ["Todos", "Cultos", "Eventos", "Batismos"];
-
-const GallerySection = () => {
+const GallerySection = ({ sectionData }: GallerySectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [selectedImage, setSelectedImage] = useState<typeof galleryImages[0] | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{ id: string; image_url: string; title: string | null; category: string | null } | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const content = sectionData?.content || {};
+  const badge = content.badge || "Momentos Especiais";
+  const title = sectionData?.title || "Nossa Galeria";
+  const subtitle = sectionData?.subtitle || "Reviva os momentos especiais que vivemos juntos em nossa comunidade.";
+  const itemsPerPage = content.items_per_page || 8;
+
+  const { data: galleryImages } = useQuery({
+    queryKey: ["gallery-home"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("gallery")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Get unique categories
+  const categories = ["Todos", ...new Set(galleryImages?.map((img) => img.category).filter(Boolean) as string[])];
 
   const filteredImages = activeCategory === "Todos"
     ? galleryImages
-    : galleryImages.filter((img) => img.category === activeCategory);
+    : galleryImages?.filter((img) => img.category === activeCategory);
+
+  // Pagination
+  const totalPages = Math.ceil((filteredImages?.length || 0) / itemsPerPage);
+  const paginatedImages = filteredImages?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
 
   return (
     <section id="galeria" className="section-padding bg-secondary/30" ref={ref}>
@@ -38,13 +76,19 @@ const GallerySection = () => {
         >
           <span className="inline-block px-4 py-1 mb-4 rounded-full bg-gold/10 text-gold text-sm font-medium">
             <Camera className="w-4 h-4 inline mr-2" />
-            Momentos Especiais
+            {badge}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4">
-            Nossa <span className="text-gold">Galeria</span>
+            {title.includes(" ") ? (
+              <>
+                {title.split(" ").slice(0, -1).join(" ")} <span className="text-gold">{title.split(" ").slice(-1)}</span>
+              </>
+            ) : (
+              <span className="text-gold">{title}</span>
+            )}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Reviva os momentos especiais que vivemos juntos em nossa comunidade.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -58,7 +102,7 @@ const GallerySection = () => {
           {categories.map((category) => (
             <button
               key={category}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => handleCategoryChange(category)}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
                 activeCategory === category
                   ? "bg-primary text-primary-foreground"
@@ -72,7 +116,7 @@ const GallerySection = () => {
 
         {/* Gallery Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredImages.map((image, index) => (
+          {paginatedImages?.map((image, index) => (
             <motion.div
               key={image.id}
               initial={{ opacity: 0, scale: 0.9 }}
@@ -82,8 +126,8 @@ const GallerySection = () => {
               onClick={() => setSelectedImage(image)}
             >
               <img
-                src={image.src}
-                alt={image.alt}
+                src={image.image_url}
+                alt={image.title || "Foto da galeria"}
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors duration-300 flex items-center justify-center">
@@ -93,19 +137,51 @@ const GallerySection = () => {
           ))}
         </div>
 
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex items-center justify-center gap-4 mt-8"
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Próxima
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </motion.div>
+        )}
+
         {/* Lightbox */}
         <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
           <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none">
             {selectedImage && (
               <div className="relative">
                 <img
-                  src={selectedImage.src.replace("w=600&h=400", "w=1200&h=800")}
-                  alt={selectedImage.alt}
+                  src={selectedImage.image_url}
+                  alt={selectedImage.title || "Foto da galeria"}
                   className="w-full h-auto rounded-lg"
                 />
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
-                  <p className="text-white font-medium">{selectedImage.alt}</p>
-                  <span className="text-white/70 text-sm">{selectedImage.category}</span>
+                  <p className="text-white font-medium">{selectedImage.title || "Sem título"}</p>
+                  <span className="text-white/70 text-sm">{selectedImage.category || "Geral"}</span>
                 </div>
               </div>
             )}

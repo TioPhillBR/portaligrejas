@@ -5,7 +5,19 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const WebRadioSection = () => {
+interface WebRadioSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      badge?: string;
+      radio_name?: string;
+      stream_url?: string;
+    };
+  };
+}
+
+const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
   const ref = useRef(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -14,8 +26,12 @@ const WebRadioSection = () => {
   const [volume, setVolume] = useState([70]);
   const [isMuted, setIsMuted] = useState(false);
 
-  // Replace with your actual stream URL
-  const streamUrl = "https://stream.zeno.fm/4d8z8h8dff8uv";
+  const content = sectionData?.content || {};
+  const badge = content.badge || "24 Horas no Ar";
+  const title = sectionData?.title || "Web Rádio";
+  const subtitle = sectionData?.subtitle || "Ouça nossa programação com músicas, mensagens e reflexões para abençoar seu dia.";
+  const radioName = content.radio_name || "Rádio Luz do Evangelho";
+  const streamUrl = content.stream_url || "https://stream.zeno.fm/4d8z8h8dff8uv";
 
   useEffect(() => {
     if (audioRef.current) {
@@ -53,14 +69,19 @@ const WebRadioSection = () => {
         >
           <span className="inline-block px-4 py-1 mb-4 rounded-full bg-white/10 text-gold text-sm font-medium">
             <Radio className="w-4 h-4 inline mr-2" />
-            24 Horas no Ar
+            {badge}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold mb-4">
-            Web <span className="text-gold">Rádio</span>
+            {title.includes(" ") ? (
+              <>
+                {title.split(" ")[0]} <span className="text-gold">{title.split(" ").slice(1).join(" ")}</span>
+              </>
+            ) : (
+              <>Web <span className="text-gold">Rádio</span></>
+            )}
           </h2>
           <p className="text-white/70 max-w-2xl mx-auto">
-            Ouça nossa programação com músicas, mensagens e reflexões para
-            abençoar seu dia.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -87,7 +108,7 @@ const WebRadioSection = () => {
                 {/* Player Controls */}
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-xl md:text-2xl font-display font-bold text-white mb-1">
-                    Rádio Luz do Evangelho
+                    {radioName}
                   </h3>
                   <p className="text-white/60 text-sm mb-4">
                     {isPlaying ? "🔴 Ao Vivo" : "Clique para ouvir"}

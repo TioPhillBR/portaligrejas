@@ -17,12 +17,31 @@ interface DonationSettings {
   cnpj?: string;
 }
 
-const DonationsSection = () => {
+interface DonationsSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      badge?: string;
+      bible_verse?: string;
+      bible_reference?: string;
+    };
+  };
+}
+
+const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [copiedPix, setCopiedPix] = useState(false);
   const [settings, setSettings] = useState<DonationSettings>({});
   const [loading, setLoading] = useState(true);
+
+  const content = sectionData?.content || {};
+  const badge = content.badge || "Contribua";
+  const title = sectionData?.title || "Dízimos e Ofertas";
+  const subtitle = sectionData?.subtitle || "Sua contribuição ajuda a manter nossa obra missionária e projetos sociais. Contribua de forma fácil e segura.";
+  const bibleVerse = content.bible_verse || '"Cada um contribua segundo propôs no seu coração; não com tristeza, ou por necessidade; porque Deus ama ao que dá com alegria."';
+  const bibleReference = content.bible_reference || "2 Coríntios 9:7";
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -30,7 +49,7 @@ const DonationsSection = () => {
         .from("site_settings")
         .select("value")
         .eq("key", "donations")
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setSettings(data.value as DonationSettings);
@@ -65,14 +84,19 @@ const DonationsSection = () => {
         >
           <span className="inline-block px-4 py-1 mb-4 rounded-full bg-gold/20 text-gold text-sm font-medium">
             <Heart className="w-4 h-4 inline mr-2" />
-            Contribua
+            {badge}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4">
-            Dízimos e <span className="text-gold">Ofertas</span>
+            {title.includes(" ") ? (
+              <>
+                {title.split(" ").slice(0, -1).join(" ")} <span className="text-gold">{title.split(" ").slice(-1)}</span>
+              </>
+            ) : (
+              <span className="text-gold">{title}</span>
+            )}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Sua contribuição ajuda a manter nossa obra missionária e projetos
-            sociais. Contribua de forma fácil e segura.
+            {subtitle}
           </p>
         </motion.div>
 
@@ -202,10 +226,9 @@ const DonationsSection = () => {
           className="text-center mt-12"
         >
           <p className="text-muted-foreground italic max-w-2xl mx-auto">
-            "Cada um contribua segundo propôs no seu coração; não com tristeza,
-            ou por necessidade; porque Deus ama ao que dá com alegria."
+            {bibleVerse}
             <span className="block mt-2 text-gold not-italic text-sm font-medium">
-              2 Coríntios 9:7
+              {bibleReference}
             </span>
           </p>
         </motion.div>

@@ -21,6 +21,7 @@ import {
   MessageCircle,
   BarChart3,
   Tag,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -45,6 +46,7 @@ const sidebarItems = [
   { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens" },
   { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },
   { icon: Settings, label: "Configurações", href: "/admin/configuracoes" },
+  { icon: Palette, label: "Temas", href: "/admin/temas" },
   { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
 ];
 

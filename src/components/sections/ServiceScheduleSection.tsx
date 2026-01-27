@@ -3,46 +3,68 @@ import { useInView } from "framer-motion";
 import { useRef } from "react";
 import { Clock, Users, Heart, BookOpen, Music, Baby } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const schedules = [
-  {
-    day: "Domingo",
-    icon: Users,
-    services: [
-      { time: "09:00", name: "Escola Bíblica Dominical" },
-      { time: "18:00", name: "Culto da Família" },
-    ],
-  },
-  {
-    day: "Terça-feira",
-    icon: Heart,
-    services: [{ time: "19:30", name: "Culto de Oração" }],
-  },
-  {
-    day: "Quarta-feira",
-    icon: BookOpen,
-    services: [{ time: "19:30", name: "Estudo Bíblico" }],
-  },
-  {
-    day: "Quinta-feira",
-    icon: Music,
-    services: [{ time: "19:30", name: "Culto de Louvor" }],
-  },
-  {
-    day: "Sexta-feira",
-    icon: Users,
-    services: [{ time: "19:30", name: "Culto dos Jovens" }],
-  },
-  {
-    day: "Sábado",
-    icon: Baby,
-    services: [{ time: "16:00", name: "Culto Infantil" }],
-  },
-];
+interface ServiceScheduleSectionProps {
+  sectionData?: {
+    title: string | null;
+    subtitle: string | null;
+    content: {
+      badge?: string;
+    };
+  };
+}
 
-const ServiceScheduleSection = () => {
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Users,
+  Heart,
+  BookOpen,
+  Music,
+  Baby,
+  Clock,
+};
+
+const ServiceScheduleSection = ({ sectionData }: ServiceScheduleSectionProps) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  const content = sectionData?.content || {};
+  const badge = content.badge || "Programação";
+  const title = sectionData?.title || "Horários de Culto";
+  const subtitle = sectionData?.subtitle || "Venha adorar conosco! Temos programações especiais para toda a família durante a semana.";
+
+  const { data: schedules } = useQuery({
+    queryKey: ["service-schedules"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("service_schedules")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Group schedules by day
+  const schedulesByDay = schedules?.reduce((acc, schedule) => {
+    if (!acc[schedule.day_of_week]) {
+      acc[schedule.day_of_week] = {
+        day: schedule.day_of_week,
+        icon: schedule.icon || "Users",
+        services: [],
+      };
+    }
+    acc[schedule.day_of_week].services.push({
+      time: schedule.time,
+      name: schedule.name,
+    });
+    return acc;
+  }, {} as Record<string, { day: string; icon: string; services: { time: string; name: string }[] }>);
+
+  const groupedSchedules = schedulesByDay ? Object.values(schedulesByDay) : [];
 
   return (
     <section id="cultos" className="section-padding bg-secondary/30" ref={ref}>
@@ -56,21 +78,26 @@ const ServiceScheduleSection = () => {
         >
           <span className="inline-block px-4 py-1 mb-4 rounded-full bg-gold/10 text-gold text-sm font-medium">
             <Clock className="w-4 h-4 inline mr-2" />
-            Programação
+            {badge}
           </span>
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4">
-            Horários de <span className="text-gold">Culto</span>
+            {title.includes(" ") ? (
+              <>
+                {title.split(" ").slice(0, -1).join(" ")} <span className="text-gold">{title.split(" ").slice(-1)}</span>
+              </>
+            ) : (
+              <span className="text-gold">{title}</span>
+            )}
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Venha adorar conosco! Temos programações especiais para toda a
-            família durante a semana.
+            {subtitle}
           </p>
         </motion.div>
 
         {/* Schedule Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {schedules.map((schedule, index) => {
-            const Icon = schedule.icon;
+          {groupedSchedules.map((schedule, index) => {
+            const Icon = iconMap[schedule.icon] || Users;
             return (
               <motion.div
                 key={schedule.day}

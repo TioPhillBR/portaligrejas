@@ -8,9 +8,15 @@ interface HeroSectionProps {
     title: string | null;
     subtitle: string | null;
     content: {
+      badge?: string;
       background_image?: string;
-      cta_text?: string;
-      cta_link?: string;
+      slogan?: string;
+      bible_verse?: string;
+      bible_reference?: string;
+      cta_button_1_text?: string;
+      cta_button_1_link?: string;
+      cta_button_2_text?: string;
+      cta_button_2_link?: string;
     };
   };
 }
@@ -23,10 +29,16 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
     }
   };
 
-  const bgImage = sectionData?.content?.background_image || heroImage;
-  const title = sectionData?.title || "Transformando vidas através do Evangelho";
-  const ctaText = sectionData?.content?.cta_text || "Assista ao Vivo";
-  const ctaLink = sectionData?.content?.cta_link || "#video";
+  const content = sectionData?.content || {};
+  const bgImage = content.background_image || heroImage;
+  const title = sectionData?.title || "Bem-vindo à Nossa Igreja";
+  const badge = content.badge || "✦ Bem-vindo à nossa família ✦";
+  const slogan = content.slogan || '"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."';
+  const bibleReference = content.bible_reference || "João 3:16";
+  const ctaButton1Text = content.cta_button_1_text || "Assista ao Vivo";
+  const ctaButton1Link = content.cta_button_1_link || "#video";
+  const ctaButton2Text = content.cta_button_2_text || "Conheça Nossa Igreja";
+  const ctaButton2Link = content.cta_button_2_link || "#quem-somos";
 
   return (
     <section
@@ -56,7 +68,7 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
             transition={{ delay: 0.2 }}
             className="inline-block px-4 py-2 mb-6 rounded-full bg-gold/20 border border-gold/40 text-gold text-sm font-medium tracking-wide"
           >
-            ✦ Bem-vindo à nossa família ✦
+            {badge}
           </motion.span>
 
           {/* Main Title */}
@@ -66,14 +78,7 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
             transition={{ delay: 0.3, duration: 0.8 }}
             className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold mb-6 leading-tight"
           >
-            {title.includes("através") ? (
-              <>
-                Transformando vidas
-                <span className="block text-gold">através do Evangelho</span>
-              </>
-            ) : (
-              <span className="text-gold">{title}</span>
-            )}
+            <span className="text-gold">{title}</span>
           </motion.h1>
 
           {/* Subtitle with Bible verse */}
@@ -83,11 +88,9 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="text-lg sm:text-xl md:text-2xl text-white/80 mb-8 max-w-2xl mx-auto font-light italic"
           >
-            "Porque Deus amou o mundo de tal maneira que deu o seu Filho
-            unigênito, para que todo aquele que nele crê não pereça, mas tenha a
-            vida eterna."
+            {slogan}
             <span className="block mt-2 text-gold/80 not-italic text-base">
-              João 3:16
+              {bibleReference}
             </span>
           </motion.p>
 
@@ -101,18 +104,18 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
             <Button
               size="lg"
               className="btn-gold text-lg px-8 py-6 gap-2"
-              onClick={() => scrollToSection(ctaLink)}
+              onClick={() => scrollToSection(ctaButton1Link)}
             >
               <Play className="w-5 h-5" />
-              {ctaText}
+              {ctaButton1Text}
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="border-white/30 text-white bg-white/10 hover:bg-white/20 text-lg px-8 py-6"
-              onClick={() => scrollToSection("#quem-somos")}
+              onClick={() => scrollToSection(ctaButton2Link)}
             >
-              Conheça Nossa Igreja
+              {ctaButton2Text}
             </Button>
           </motion.div>
         </motion.div>
