@@ -114,76 +114,76 @@ const MemberDashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-6 text-primary-foreground">
-        <h1 className="text-2xl md:text-3xl font-display font-bold">
+      <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 md:p-6 text-primary-foreground">
+        <h1 className="text-xl md:text-2xl lg:text-3xl font-display font-bold">
           {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Membro"}! 👋
         </h1>
-        <p className="mt-2 opacity-90">
+        <p className="mt-2 opacity-90 text-sm md:text-base">
           Bem-vindo à sua área de membro. Aqui você pode participar dos grupos e acompanhar as novidades da igreja.
         </p>
       </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
         <Link to="/membro/perfil">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Meu Perfil</span>
+              <span className="text-xs md:text-sm font-medium">Perfil</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/eventos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Eventos</span>
+              <span className="text-xs md:text-sm font-medium">Eventos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/ministerios">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Ministérios</span>
+              <span className="text-xs md:text-sm font-medium">Ministérios</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/grupos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <MessageCircle className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Grupos</span>
+              <span className="text-xs md:text-sm font-medium">Grupos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/avisos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bell className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Avisos</span>
+              <span className="text-xs md:text-sm font-medium">Avisos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/buscar">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
-            <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Search className="w-6 h-6 text-primary" />
+            <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Search className="w-5 h-5 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-sm font-medium">Buscar Membros</span>
+              <span className="text-xs md:text-sm font-medium">Buscar</span>
             </CardContent>
           </Card>
         </Link>
