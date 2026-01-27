@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Menu, X, LogIn, User } from "lucide-react";
+import { LogIn, User } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
@@ -21,7 +21,6 @@ const navItems = [
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -37,7 +36,6 @@ const Header = () => {
 
   const scrollToSection = (href: string, isRoute?: boolean) => {
     if (isRoute) {
-      setIsMobileMenuOpen(false);
       return;
     }
 
@@ -51,7 +49,6 @@ const Header = () => {
       // Navigate to homepage with anchor
       navigate("/" + href);
     }
-    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -64,7 +61,15 @@ const Header = () => {
       )}
     >
       <div className="container-custom flex items-center justify-between">
-        <Logo size={isScrolled ? "sm" : "md"} />
+        {/* Desktop: Logo on left */}
+        <div className="hidden md:block">
+          <Logo size={isScrolled ? "sm" : "md"} />
+        </div>
+
+        {/* Mobile: Centered Logo */}
+        <div className="md:hidden flex-1 flex justify-center">
+          <Logo size={isScrolled ? "sm" : "md"} />
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1">
@@ -99,7 +104,8 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
+        {/* Desktop: Right side icons */}
+        <div className="hidden md:flex items-center gap-2">
           <ThemeToggle />
           
           {/* Unified Notification Bell for logged-in users */}
@@ -135,53 +141,9 @@ const Header = () => {
           >
             Quero Visitar
           </Button>
-
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label="Menu"
-          >
-            {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </Button>
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {isMobileMenuOpen && (
-        <nav className="lg:hidden absolute top-full left-0 right-0 glass-effect shadow-lg animate-fade-in">
-          <div className="container-custom py-4 flex flex-col gap-1">
-            {navItems.map((item) => (
-              item.isRoute ? (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="px-4 py-3 text-left rounded-lg text-foreground font-medium hover:bg-accent/50 transition-colors"
-                >
-                  {item.label}
-                </Link>
-              ) : (
-                <button
-                  key={item.href}
-                  onClick={() => scrollToSection(item.href)}
-                  className="px-4 py-3 text-left rounded-lg text-foreground font-medium hover:bg-accent/50 transition-colors"
-                >
-                  {item.label}
-                </button>
-              )
-            ))}
-            <Button
-              onClick={() => scrollToSection("#contato")}
-              className="mt-2 btn-gold w-full"
-            >
-              Quero Visitar
-            </Button>
-          </div>
-        </nav>
-      )}
     </header>
   );
 };

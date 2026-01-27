@@ -13,6 +13,7 @@ import DonationsSection from "@/components/sections/DonationsSection";
 import PrayerRequestSection from "@/components/sections/PrayerRequestSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/Footer";
+import MobileFooter from "@/components/MobileFooter";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
@@ -57,7 +58,7 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-20 md:pb-0">
         <Header />
       
       <main>
@@ -78,6 +79,7 @@ const Index = () => {
       </main>
       
       <Footer />
+      <MobileFooter />
       
         {/* Floating Elements */}
         <WhatsAppButton />
