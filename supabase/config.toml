@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.notify-free-account]
 verify_jwt = false
+
+[functions.check-free-account]
+verify_jwt = false
+
+[functions.calculate-prorata]
+verify_jwt = false

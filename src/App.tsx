@@ -52,6 +52,7 @@ import AdminHomeSections from "./pages/admin/HomeSections";
 import AdminEntityPhotos from "./pages/admin/EntityPhotos";
 import AdminThemeSettings from "./pages/admin/ThemeSettings";
 import AdminSubscription from "./pages/admin/Subscription";
+import AdminPaymentHistory from "./pages/admin/PaymentHistory";
 
 // Platform admin components
 import PlatformLayout from "./components/platform/PlatformLayout";
@@ -189,6 +190,7 @@ const App = () => (
                 <Route path="fotos/:entityType/:entityId" element={<AdminEntityPhotos />} />
                 <Route path="temas" element={<AdminThemeSettings />} />
                 <Route path="assinatura" element={<AdminSubscription />} />
+                <Route path="faturas" element={<AdminPaymentHistory />} />
               </Route>
               
               {/* ===== CHURCH MEMBER ROUTES (/:slug/membro) ===== */}
