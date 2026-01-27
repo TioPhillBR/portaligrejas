@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { CardSkeleton } from "@/components/ui/skeleton-shimmer";
 
 interface DonationSettings {
   pix_key?: string;
@@ -116,6 +117,12 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
           </p>
         </motion.div>
 
+        {loading ? (
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        ) : (
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* PIX Card */}
           <motion.div
@@ -265,6 +272,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
             </Card>
           </motion.div>
         </div>
+        )}
 
         {/* Bible Verse */}
         <motion.div
