@@ -24,5 +24,8 @@ verify_jwt = false
 [functions.check-free-account]
 verify_jwt = false
 
+[functions.invoice-reminders]
+verify_jwt = false
+
 [functions.calculate-prorata]
 verify_jwt = false
