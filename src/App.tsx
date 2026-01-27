@@ -51,6 +51,7 @@ import AdminThemeSettings from "./pages/admin/ThemeSettings";
 import PlatformLayout from "./components/platform/PlatformLayout";
 import PlatformDashboard from "./pages/platform/PlatformDashboard";
 import PlatformChurches from "./pages/platform/PlatformChurches";
+import PlatformTickets from "./pages/platform/PlatformTickets";
 import PlatformUsers from "./pages/platform/PlatformUsers";
 import PlatformSubscriptions from "./pages/platform/PlatformSubscriptions";
 import PlatformReports from "./pages/platform/PlatformReports";
@@ -68,6 +69,7 @@ import DirectMessageChat from "./pages/member/DirectMessageChat";
 import MemberBroadcasts from "./pages/member/MemberBroadcasts";
 import MemberEvents from "./pages/member/MemberEvents";
 import MemberSearch from "./pages/member/MemberSearch";
+import MemberSupport from "./pages/member/MemberSupport";
 
 // Church site wrapper
 import { ChurchProvider } from "./contexts/ChurchContext";
@@ -108,6 +110,7 @@ const App = () => (
               <Route path="/plataforma" element={<PlatformLayout />}>
                 <Route index element={<PlatformDashboard />} />
                 <Route path="igrejas" element={<PlatformChurches />} />
+                <Route path="tickets" element={<PlatformTickets />} />
                 <Route path="usuarios" element={<PlatformUsers />} />
                 <Route path="assinaturas" element={<PlatformSubscriptions />} />
                 <Route path="relatorios" element={<PlatformReports />} />
@@ -192,6 +195,7 @@ const App = () => (
                 <Route path="mensagens/:recipientId" element={<DirectMessageChat />} />
                 <Route path="buscar" element={<MemberSearch />} />
                 <Route path="avisos" element={<MemberBroadcasts />} />
+                <Route path="suporte" element={<MemberSupport />} />
               </Route>
               
               {/* ===== 404 ===== */}

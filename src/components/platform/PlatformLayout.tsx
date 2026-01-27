@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BarChart3,
   CreditCard,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +24,7 @@ import { toast } from "sonner";
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/plataforma" },
   { icon: Church, label: "Igrejas", href: "/plataforma/igrejas" },
+  { icon: MessageSquare, label: "Tickets", href: "/plataforma/tickets" },
   { icon: Users, label: "Usuários", href: "/plataforma/usuarios" },
   { icon: CreditCard, label: "Assinaturas", href: "/plataforma/assinaturas" },
   { icon: BarChart3, label: "Relatórios", href: "/plataforma/relatorios" },
