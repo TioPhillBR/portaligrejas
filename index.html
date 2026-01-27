@@ -1,5 +1,21 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="no-transitions">
+  <script>
+    // Apply saved theme immediately to prevent flash
+    (function() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+      // Remove no-transitions after a brief delay
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          document.documentElement.classList.remove('no-transitions');
+        }, 100);
+      });
+    })();
+  </script>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

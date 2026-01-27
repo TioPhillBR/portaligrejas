@@ -13,6 +13,9 @@ const ThemeToggle = () => {
   const toggleTheme = () => {
     const newIsDark = !isDark;
     setIsDark(newIsDark);
+    
+    // Ensure transitions are enabled
+    document.documentElement.classList.remove("no-transitions");
     document.documentElement.classList.toggle("dark", newIsDark);
     localStorage.setItem("theme", newIsDark ? "dark" : "light");
   };
