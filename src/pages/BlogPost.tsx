@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobileFooter from "@/components/MobileFooter";
 import BlogComments from "@/components/blog/BlogComments";
 import BlogLikeButton from "@/components/blog/BlogLikeButton";
 import ReadingProgressBar from "@/components/blog/ReadingProgressBar";
@@ -152,7 +153,7 @@ const BlogPost = () => {
     <>
       <ReadingProgressBar />
       <Header />
-      <main className="min-h-screen pt-24 pb-16">
+      <main className="min-h-screen pt-24 pb-24 md:pb-16">
         <article className="container-custom max-w-4xl">
           {/* Back Button */}
           <Link
@@ -307,6 +308,7 @@ const BlogPost = () => {
         </article>
       </main>
       <Footer />
+      <MobileFooter />
     </>
   );
 };
