@@ -14,6 +14,7 @@ import {
   Send,
   Calendar,
   Search,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -37,6 +38,7 @@ const sidebarItems = [
   { icon: Send, label: "Mensagens", href: "/membro/mensagens" },
   { icon: Search, label: "Buscar Membros", href: "/membro/buscar" },
   { icon: Bell, label: "Avisos", href: "/membro/avisos" },
+  { icon: HelpCircle, label: "Suporte", href: "/membro/suporte" },
 ];
 
 // Routes for swipe navigation (main navigation items only)

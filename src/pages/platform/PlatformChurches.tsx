@@ -19,10 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ExternalLink, Search, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { ExternalLink, Search, Eye, Edit, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Church {
   id: string;
@@ -41,6 +51,14 @@ const PlatformChurches = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedChurch, setSelectedChurch] = useState<Church | null>(null);
+  const [newPlan, setNewPlan] = useState<string>("");
+  const [newStatus, setNewStatus] = useState<string>("");
+  const [adminNote, setAdminNote] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchChurches();
@@ -73,6 +91,40 @@ const PlatformChurches = () => {
 
     return matchesSearch && matchesPlan && matchesStatus;
   });
+
+  const openEditDialog = (church: Church) => {
+    setSelectedChurch(church);
+    setNewPlan(church.plan || "free");
+    setNewStatus(church.status || "active");
+    setAdminNote("");
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveChanges = async () => {
+    if (!selectedChurch) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("churches")
+        .update({
+          plan: newPlan,
+          status: newStatus,
+        })
+        .eq("id", selectedChurch.id);
+
+      if (error) throw error;
+
+      toast.success("Igreja atualizada com sucesso!");
+      setEditDialogOpen(false);
+      fetchChurches();
+    } catch (error: any) {
+      console.error("Error updating church:", error);
+      toast.error("Erro ao atualizar igreja: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getPlanBadge = (plan: string | null) => {
     switch (plan) {
@@ -214,6 +266,14 @@ const PlatformChurches = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => openEditDialog(church)}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
                           <Button variant="ghost" size="sm" asChild>
                             <Link to={`/${church.slug}`} target="_blank">
                               <Eye className="w-4 h-4 mr-1" />
@@ -236,6 +296,68 @@ const PlatformChurches = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar Igreja</DialogTitle>
+            <DialogDescription>
+              {selectedChurch?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Plano</label>
+              <Select value={newPlan} onValueChange={setNewPlan}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Gratuito</SelectItem>
+                  <SelectItem value="prata">🥈 Prata - R$ 69/mês</SelectItem>
+                  <SelectItem value="ouro">🥇 Ouro - R$ 119/mês</SelectItem>
+                  <SelectItem value="diamante">💎 Diamante - R$ 189/mês</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="suspended">Suspenso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nota do Admin (opcional)</label>
+              <Textarea
+                placeholder="Motivo da alteração..."
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveChanges} disabled={saving}>
+              {saving ? "Salvando..." : "Salvar Alterações"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
