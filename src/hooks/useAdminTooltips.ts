@@ -79,6 +79,11 @@ export const ADMIN_TOOLTIPS: Record<string, TooltipConfig> = {
     title: "Assinatura",
     description: "Gerencie seu plano, veja recursos disponíveis e faça upgrade quando precisar de mais funcionalidades.",
   },
+  "/admin/analytics": {
+    sectionKey: "analytics",
+    title: "Analytics de Engajamento",
+    description: "Veja quais seções do seu site são mais visitadas e entenda melhor o comportamento dos visitantes.",
+  },
 };
 
 export function useAdminTooltips() {

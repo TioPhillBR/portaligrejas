@@ -1311,6 +1311,47 @@ export type Database = {
           },
         ]
       }
+      section_views: {
+        Row: {
+          church_id: string | null
+          created_at: string
+          device_type: string | null
+          id: string
+          page_path: string
+          section_key: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          church_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          page_path: string
+          section_key: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          church_id?: string | null
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          page_path?: string
+          section_key?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "section_views_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_schedules: {
         Row: {
           church_id: string | null

@@ -55,6 +55,7 @@ import AdminEntityPhotos from "./pages/admin/EntityPhotos";
 import AdminThemeSettings from "./pages/admin/ThemeSettings";
 import AdminSubscription from "./pages/admin/Subscription";
 import AdminPaymentHistory from "./pages/admin/PaymentHistory";
+import AdminAnalytics from "./pages/admin/Analytics";
 
 // Platform admin components
 import PlatformLayout from "./components/platform/PlatformLayout";
@@ -196,6 +197,7 @@ const App = () => (
                 <Route path="temas" element={<AdminThemeSettings />} />
                 <Route path="assinatura" element={<AdminSubscription />} />
                 <Route path="faturas" element={<AdminPaymentHistory />} />
+                <Route path="analytics" element={<AdminAnalytics />} />
               </Route>
               
               {/* ===== CHURCH MEMBER ROUTES (/:slug/membro) ===== */}
