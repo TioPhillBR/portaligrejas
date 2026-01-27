@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PhotoGallery from "@/components/PhotoGallery";
+import Breadcrumb from "@/components/Breadcrumb";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 import { icons } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -90,14 +92,13 @@ const MinistryDetails = () => {
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
-          {/* Back Button */}
-          <Link
-            to="/#ministerios"
-            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para Ministérios
-          </Link>
+          {/* Breadcrumb */}
+          <Breadcrumb 
+            items={[
+              { label: "Ministérios", href: "/#ministerios" },
+              { label: ministry.name }
+            ]} 
+          />
 
           {/* Hero Section */}
           <div className={`relative h-[300px] rounded-xl overflow-hidden mb-8 bg-gradient-to-r ${ministry.color || "from-blue-500 to-blue-600"}`}>
@@ -207,6 +208,7 @@ const MinistryDetails = () => {
         </div>
       </main>
       <Footer />
+      <ScrollToTopButton />
     </>
   );
 };

@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Breadcrumb from "@/components/Breadcrumb";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 
 interface BlogTag {
   id: string;
@@ -130,6 +132,9 @@ const Blog = () => {
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
+          {/* Breadcrumb */}
+          <Breadcrumb items={[{ label: "Blog" }]} />
+
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Blog</h1>
@@ -375,6 +380,7 @@ const Blog = () => {
         </div>
       </main>
       <Footer />
+      <ScrollToTopButton />
     </>
   );
 };

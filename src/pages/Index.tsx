@@ -15,6 +15,7 @@ import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
+import ScrollToTopButton from "@/components/ScrollToTopButton";
 import { useHomeSections } from "@/hooks/useHomeSections";
 
 // Map section keys to components
@@ -95,6 +96,7 @@ const Index = () => {
       {/* Floating Elements */}
       <WhatsAppButton />
       <PWAInstallPrompt />
+      <ScrollToTopButton />
     </div>
   );
 };
