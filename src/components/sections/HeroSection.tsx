@@ -35,8 +35,8 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
   const badge = content.badge || "✦ Bem-vindo à nossa família ✦";
   const slogan = content.slogan || '"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."';
   const bibleReference = content.bible_reference || "João 3:16";
-  const ctaButton1Text = content.cta_button_1_text || "Assista ao Vivo";
-  const ctaButton1Link = content.cta_button_1_link || "#video";
+  const ctaButton1Text = content.cta_button_1_text || "Nossos Cultos";
+  const ctaButton1Link = content.cta_button_1_link || "#cultos";
   const ctaButton2Text = content.cta_button_2_text || "Conheça Nossa Igreja";
   const ctaButton2Link = content.cta_button_2_link || "#quem-somos";
 
