@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Logo from "@/components/Logo";
+import PageTransition from "@/components/PageTransition";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -55,8 +56,9 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
-      <Card className="w-full max-w-md">
+    <PageTransition>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 p-4">
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <Logo size="lg" />
@@ -121,9 +123,10 @@ const Login = () => {
               ← Voltar para o site
             </Link>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </div>
+    </PageTransition>
   );
 };
 

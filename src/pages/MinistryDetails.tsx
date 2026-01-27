@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import PhotoGallery from "@/components/PhotoGallery";
 import Breadcrumb from "@/components/Breadcrumb";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
+import PageTransition from "@/components/PageTransition";
 import { icons } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -88,7 +89,7 @@ const MinistryDetails = () => {
   const Icon = getIcon(ministry.icon || "Users");
 
   return (
-    <>
+    <PageTransition>
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
@@ -209,7 +210,7 @@ const MinistryDetails = () => {
       </main>
       <Footer />
       <ScrollToTopButton />
-    </>
+    </PageTransition>
   );
 };
 
