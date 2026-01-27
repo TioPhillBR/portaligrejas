@@ -67,7 +67,8 @@ export const LandingHero = () => {
 
   const handleContinue = () => {
     if (isAvailable && slug.length >= 3) {
-      navigate(`/criar-igreja?slug=${slug}`);
+      // Navigate to wizard with slug parameter
+      navigate(`/criar-igreja/wizard?slug=${slug}`);
     }
   };
 
