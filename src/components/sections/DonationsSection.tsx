@@ -8,12 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface DonationSettings {
   pix_key?: string;
+  pix_type?: string;
   pix_image_url?: string;
   bank_name?: string;
   bank_code?: string;
   agency?: string;
   account?: string;
-  account_holder?: string;
+  holder?: string;
   cnpj?: string;
 }
 
@@ -23,6 +24,7 @@ interface DonationsSectionProps {
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
       bible_verse?: string;
       bible_reference?: string;
     };
@@ -39,7 +41,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
   const content = sectionData?.content || {};
   const badge = content.badge || "Contribua";
   const title = sectionData?.title || "Dízimos e Ofertas";
-  const subtitle = sectionData?.subtitle || "Sua contribuição ajuda a manter nossa obra missionária e projetos sociais. Contribua de forma fácil e segura.";
+  const subtitle = sectionData?.subtitle || content.description || "Sua contribuição ajuda a manter nossa obra missionária e projetos sociais. Contribua de forma fácil e segura.";
   const bibleVerse = content.bible_verse || '"Cada um contribua segundo propôs no seu coração; não com tristeza, ou por necessidade; porque Deus ama ao que dá com alegria."';
   const bibleReference = content.bible_reference || "2 Coríntios 9:7";
 
@@ -61,6 +63,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
   }, []);
 
   const pixKey = settings.pix_key || "contato@igrejaluz.com.br";
+  const pixType = settings.pix_type || "email";
 
   const copyPixKey = () => {
     navigator.clipboard.writeText(pixKey);
@@ -137,7 +140,9 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
 
                 {/* PIX Key */}
                 <div className="bg-secondary/50 rounded-lg p-4 mb-4">
-                  <p className="text-xs text-muted-foreground mb-1">Chave PIX (E-mail)</p>
+                  <p className="text-xs text-muted-foreground mb-1">
+                    Chave PIX ({pixType === "email" ? "E-mail" : pixType === "cpf" ? "CPF" : pixType === "cnpj" ? "CNPJ" : pixType === "phone" ? "Telefone" : "Aleatória"})
+                  </p>
                   <p className="font-mono text-sm text-foreground break-all">
                     {pixKey}
                   </p>
@@ -203,7 +208,7 @@ const DonationsSection = ({ sectionData }: DonationsSectionProps) => {
                   <div className="bg-secondary/50 rounded-lg p-4">
                     <p className="text-xs text-muted-foreground mb-1">Titular</p>
                     <p className="font-semibold text-foreground">
-                      {settings.account_holder || "Igreja Luz do Evangelho"}
+                      {settings.holder || "Igreja Luz do Evangelho"}
                     </p>
                   </div>
                   <div className="bg-secondary/50 rounded-lg p-4">
