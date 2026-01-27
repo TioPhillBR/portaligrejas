@@ -8,7 +8,7 @@ import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 const mainNavItems = [
   { label: "Início", href: "#inicio", icon: Home, sectionId: "inicio" },
   { label: "Eventos", href: "#eventos", icon: Calendar, sectionId: "eventos" },
@@ -36,6 +36,7 @@ const MobileFooter = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { lightImpact } = useHapticFeedback();
 
   // Track active section based on scroll position
   useEffect(() => {
@@ -66,6 +67,8 @@ const MobileFooter = () => {
   }, [location.pathname]);
 
   const scrollToSection = (href: string, isRoute?: boolean) => {
+    lightImpact();
+    
     if (isRoute) {
       setIsMenuOpen(false);
       return;
@@ -80,6 +83,10 @@ const MobileFooter = () => {
       navigate("/" + href);
     }
     setIsMenuOpen(false);
+  };
+
+  const handleNavClick = () => {
+    lightImpact();
   };
 
   const isActive = (item: typeof mainNavItems[0]) => {
@@ -126,6 +133,7 @@ const MobileFooter = () => {
             <motion.div key={item.href} variants={itemVariants}>
               <Link
                 to={item.href}
+                onClick={handleNavClick}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200",
                   active 
@@ -192,7 +200,10 @@ const MobileFooter = () => {
         })}
 
         {/* Hamburger Menu */}
-        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <Sheet open={isMenuOpen} onOpenChange={(open) => {
+          if (open) lightImpact();
+          setIsMenuOpen(open);
+        }}>
           <SheetTrigger asChild>
             <motion.button 
               variants={itemVariants}

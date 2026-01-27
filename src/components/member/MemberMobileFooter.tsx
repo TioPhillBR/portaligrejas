@@ -7,6 +7,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import { useHapticFeedback } from "@/hooks/useHapticFeedback";
 
 const mainNavItems = [
   { label: "Início", href: "/membro", icon: Home },
@@ -31,6 +32,11 @@ const MemberMobileFooter = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { lightImpact } = useHapticFeedback();
+
+  const handleNavClick = () => {
+    lightImpact();
+  };
 
   const isActive = (href: string) => {
     if (href === "/membro") {
@@ -81,6 +87,7 @@ const MemberMobileFooter = () => {
             <motion.div key={item.href} variants={itemVariants} className="relative">
               <Link
                 to={item.href}
+                onClick={handleNavClick}
                 className={cn(
                   "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200",
                   active 
@@ -114,7 +121,10 @@ const MemberMobileFooter = () => {
         })}
 
         {/* Menu hamburger */}
-        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+        <Sheet open={isMenuOpen} onOpenChange={(open) => {
+          if (open) lightImpact();
+          setIsMenuOpen(open);
+        }}>
           <SheetTrigger asChild>
             <motion.button 
               variants={itemVariants}
