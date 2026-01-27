@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled" | "free_account_used";
+type EmailType = "payment_confirmed" | "payment_overdue" | "church_suspended" | "subscription_cancelled" | "free_account_used" | "invoice_reminder_3days" | "invoice_reminder_1day";
 
 interface EmailPayload {
   type: EmailType;
@@ -15,10 +15,12 @@ interface EmailPayload {
   planName?: string;
   daysOverdue?: number;
   grantedEmail?: string;
+  amount?: number;
+  dueDate?: string;
 }
 
 const getEmailTemplate = (payload: EmailPayload) => {
-  const { type, churchName, ownerName, planName, daysOverdue, grantedEmail } = payload;
+  const { type, churchName, ownerName, planName, daysOverdue, grantedEmail, amount, dueDate } = payload;
 
   switch (type) {
     case "payment_confirmed":
@@ -212,6 +214,83 @@ const getEmailTemplate = (payload: EmailPayload) => {
             </div>
             <div class="footer">
               <p>Portal Igrejas - Notificação Administrativa</p>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "invoice_reminder_3days":
+      return {
+        subject: `📅 Lembrete: Fatura vence em 3 dias - ${churchName}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
+              .info { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; border-radius: 4px; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>📅 Lembrete de Pagamento</h1>
+            </div>
+            <div class="content">
+              <p>Olá, <strong>${ownerName || 'Administrador'}</strong>!</p>
+              <p>Sua fatura de <strong>${churchName}</strong> vence em <strong>3 dias</strong>.</p>
+              <div class="info">
+                <p><strong>Valor:</strong> R$ ${amount?.toFixed(2).replace(".", ",") || "0,00"}</p>
+                <p><strong>Vencimento:</strong> ${dueDate ? new Date(dueDate).toLocaleDateString("pt-BR") : "Em breve"}</p>
+                <p><strong>Plano:</strong> ${planName?.charAt(0).toUpperCase()}${planName?.slice(1) || "Assinatura"}</p>
+              </div>
+              <p>Para evitar a suspensão do seu site, efetue o pagamento antes do vencimento.</p>
+              <p>Obrigado por fazer parte do Portal Igrejas!</p>
+            </div>
+            <div class="footer">
+              <p>Portal Igrejas - Seu site no ar em poucos minutos</p>
+            </div>
+          </body>
+          </html>
+        `,
+      };
+
+    case "invoice_reminder_1day":
+      return {
+        subject: `⚡ Urgente: Fatura vence amanhã - ${churchName}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; border-radius: 12px 12px 0 0; text-align: center; }
+              .content { background: #f9fafb; padding: 30px; border-radius: 0 0 12px 12px; }
+              .warning { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; }
+              .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>⚡ Último Aviso!</h1>
+            </div>
+            <div class="content">
+              <p>Olá, <strong>${ownerName || 'Administrador'}</strong>!</p>
+              <p>Sua fatura de <strong>${churchName}</strong> vence <strong>amanhã</strong>!</p>
+              <div class="warning">
+                <p><strong>⚠️ Atenção:</strong> Após o vencimento, seu site poderá ser suspenso se o pagamento não for regularizado em até 7 dias.</p>
+                <p><strong>Valor:</strong> R$ ${amount?.toFixed(2).replace(".", ",") || "0,00"}</p>
+                <p><strong>Vencimento:</strong> ${dueDate ? new Date(dueDate).toLocaleDateString("pt-BR") : "Amanhã"}</p>
+              </div>
+              <p>Efetue o pagamento hoje para garantir que seu site continue ativo!</p>
+            </div>
+            <div class="footer">
+              <p>Portal Igrejas - Seu site no ar em poucos minutos</p>
             </div>
           </body>
           </html>

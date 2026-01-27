@@ -26,6 +26,7 @@ import {
 
 interface ChurchData {
   id: string;
+  name: string;
   plan: string;
   status: string;
   created_at: string;
@@ -38,6 +39,15 @@ interface SubscriptionHistory {
   new_plan: string;
   change_type: string;
   mrr_change: number;
+  created_at: string;
+}
+
+interface PaymentData {
+  id: string;
+  church_id: string;
+  amount: number;
+  status: string;
+  paid_at: string | null;
   created_at: string;
 }
 
@@ -58,6 +68,7 @@ const PLAN_COLORS: Record<string, string> = {
 const PlatformReports = () => {
   const [churches, setChurches] = useState<ChurchData[]>([]);
   const [history, setHistory] = useState<SubscriptionHistory[]>([]);
+  const [payments, setPayments] = useState<PaymentData[]>([]);
   const [loading, setLoading] = useState(true);
   const { exportToPDF, exportToExcel } = useReportExport();
   const [period, setPeriod] = useState("6");
@@ -68,14 +79,16 @@ const PlatformReports = () => {
 
   const fetchData = async () => {
     try {
-      const [churchesRes, historyRes] = await Promise.all([
-        supabase.from("churches").select("id, plan, status, created_at"),
+      const [churchesRes, historyRes, paymentsRes] = await Promise.all([
+        supabase.from("churches").select("id, name, plan, status, created_at"),
         supabase.from("subscription_history").select("*").order("created_at", { ascending: true }),
+        supabase.from("payment_history").select("id, church_id, amount, status, paid_at, created_at").eq("status", "paid"),
       ]);
 
       if (churchesRes.error) throw churchesRes.error;
       setChurches(churchesRes.data || []);
       setHistory(historyRes.data || []);
+      setPayments(paymentsRes.data || []);
     } catch (error: any) {
       console.error("Error fetching data:", error);
       toast.error("Erro ao carregar dados");
@@ -160,6 +173,40 @@ const PlatformReports = () => {
       isProjection: true,
     }));
 
+    // Calculate LTV per church
+    const ltvByChurch = churches
+      .filter((c) => c.plan && c.plan !== "free")
+      .map((church) => {
+        // Sum all paid payments for this church
+        const churchPayments = payments.filter((p) => p.church_id === church.id);
+        const totalRevenue = churchPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+        
+        // Calculate months as customer
+        const startDate = new Date(church.created_at);
+        const monthsAsCustomer = Math.max(1, 
+          Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30))
+        );
+        
+        // Calculate average monthly value
+        const avgMonthlyValue = totalRevenue > 0 ? totalRevenue / monthsAsCustomer : PLAN_PRICES[church.plan] || 0;
+        
+        return {
+          churchId: church.id,
+          churchName: church.name,
+          plan: church.plan,
+          totalRevenue,
+          monthsAsCustomer,
+          avgMonthlyValue,
+          estimatedLTV: avgMonthlyValue * 24, // Estimate 24 months lifetime
+        };
+      })
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+    // Average LTV
+    const avgLTV = ltvByChurch.length > 0
+      ? ltvByChurch.reduce((sum, c) => sum + c.estimatedLTV, 0) / ltvByChurch.length
+      : 0;
+
     return {
       currentMRR,
       mrrGrowth,
@@ -175,8 +222,10 @@ const PlatformReports = () => {
       mrrByMonth,
       forecast,
       arpu: paidChurches.length > 0 ? currentMRR / paidChurches.length : 0,
+      ltvByChurch,
+      avgLTV,
     };
-  }, [churches, history, period]);
+  }, [churches, history, payments, period]);
 
   if (loading) {
     return (
@@ -297,6 +346,7 @@ const PlatformReports = () => {
         <TabsList>
           <TabsTrigger value="mrr">Evolução do MRR</TabsTrigger>
           <TabsTrigger value="distribution">Distribuição por Plano</TabsTrigger>
+          <TabsTrigger value="ltv">LTV por Cliente</TabsTrigger>
           <TabsTrigger value="forecast">Previsão de Receita</TabsTrigger>
         </TabsList>
 
@@ -410,6 +460,51 @@ const PlatformReports = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* LTV per Client */}
+        <TabsContent value="ltv">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lifetime Value por Cliente</CardTitle>
+              <CardDescription>
+                LTV médio estimado: R$ {metrics.avgLTV.toFixed(2).replace(".", ",")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2">Igreja</th>
+                      <th className="text-left py-3 px-2">Plano</th>
+                      <th className="text-right py-3 px-2">Receita Total</th>
+                      <th className="text-right py-3 px-2">Meses</th>
+                      <th className="text-right py-3 px-2">Média/Mês</th>
+                      <th className="text-right py-3 px-2">LTV Est. (24m)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metrics.ltvByChurch.slice(0, 20).map((church) => (
+                      <tr key={church.churchId} className="border-b hover:bg-muted/50">
+                        <td className="py-3 px-2 font-medium">{church.churchName}</td>
+                        <td className="py-3 px-2 capitalize">{church.plan}</td>
+                        <td className="py-3 px-2 text-right">R$ {church.totalRevenue.toFixed(2).replace(".", ",")}</td>
+                        <td className="py-3 px-2 text-right">{church.monthsAsCustomer}</td>
+                        <td className="py-3 px-2 text-right">R$ {church.avgMonthlyValue.toFixed(2).replace(".", ",")}</td>
+                        <td className="py-3 px-2 text-right font-semibold text-green-600">
+                          R$ {church.estimatedLTV.toFixed(2).replace(".", ",")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {metrics.ltvByChurch.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">Nenhum cliente pagante encontrado</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Revenue Forecast */}

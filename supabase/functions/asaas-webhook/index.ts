@@ -178,6 +178,27 @@ Deno.serve(async (req) => {
         .update(updateData)
         .eq("id", churchId);
 
+      // Record payment in payment_history
+      if (payment) {
+        await supabase.from("payment_history").upsert({
+          church_id: churchId,
+          asaas_payment_id: payment.id,
+          asaas_subscription_id: subscription?.id || null,
+          amount: payment.value || 0,
+          status: "paid",
+          payment_method: payment.billingType || null,
+          billing_type: payment.billingType || null,
+          due_date: payment.dueDate || null,
+          paid_at: new Date().toISOString(),
+          invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+          description: `Pagamento - Plano ${updateData.plan || church.plan}`,
+          plan: updateData.plan || church.plan,
+        }, {
+          onConflict: "asaas_payment_id",
+        });
+        console.log(`Payment ${payment.id} recorded in payment_history`);
+      }
+
       console.log(`Church ${churchId} activated with plan: ${updateData.plan || church.plan}`);
 
       // Send confirmation email
@@ -238,7 +259,51 @@ Deno.serve(async (req) => {
     // Handle payment deleted
     if (event === "PAYMENT_DELETED") {
       console.log(`Payment deleted for church ${churchId}`);
-      // Just log for now, don't take action on deleted payments
+      // Update payment_history if exists
+      if (payment?.id) {
+        await supabase
+          .from("payment_history")
+          .update({ status: "cancelled" })
+          .eq("asaas_payment_id", payment.id);
+      }
+    }
+
+    // Handle payment created (new invoice)
+    if (event === "PAYMENT_CREATED") {
+      console.log(`Payment created for church ${churchId}`);
+      if (payment) {
+        await supabase.from("payment_history").upsert({
+          church_id: churchId,
+          asaas_payment_id: payment.id,
+          asaas_subscription_id: subscription?.id || null,
+          amount: payment.value || 0,
+          status: "pending",
+          payment_method: payment.billingType || null,
+          billing_type: payment.billingType || null,
+          due_date: payment.dueDate || null,
+          invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+          description: `Fatura - Plano ${church.plan}`,
+          plan: church.plan,
+        }, {
+          onConflict: "asaas_payment_id",
+        });
+        console.log(`Payment ${payment.id} created in payment_history`);
+      }
+    }
+
+    // Handle payment updated
+    if (event === "PAYMENT_UPDATED") {
+      console.log(`Payment updated for church ${churchId}`);
+      if (payment?.id) {
+        await supabase
+          .from("payment_history")
+          .update({
+            amount: payment.value || 0,
+            due_date: payment.dueDate || null,
+            invoice_url: payment.invoiceUrl || payment.bankSlipUrl || null,
+          })
+          .eq("asaas_payment_id", payment.id);
+      }
     }
 
     // Handle subscription cancellation events

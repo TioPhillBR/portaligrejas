@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 // Landing pages
 import LandingPage from "./pages/landing/LandingPage";
 import CreateChurch from "./pages/landing/CreateChurch";
+import ChurchWizard from "./pages/onboarding/ChurchWizard";
 
 // Auth pages
 import Login from "./pages/Login";
@@ -107,6 +108,7 @@ const App = () => (
               {/* ===== LANDING PAGE (SaaS) ===== */}
               <Route path="/" element={<LandingPage />} />
               <Route path="/criar-igreja" element={<CreateChurch />} />
+              <Route path="/criar-igreja/wizard" element={<ChurchWizard />} />
               <Route path="/igrejas" element={<ChurchesList />} />
               <Route path="/planos" element={<Pricing />} />
               <Route path="/checkout" element={<Checkout />} />
