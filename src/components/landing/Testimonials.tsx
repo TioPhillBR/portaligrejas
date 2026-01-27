@@ -1,75 +1,89 @@
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    name: "Pastor João Silva",
-    church: "Igreja Batista Central",
-    avatar: "JS",
+    name: "Pr. João",
+    church: "Igreja Vida Plena (SP)",
+    avatar: "JP",
     content:
-      "O Portal Igrejas transformou nossa comunicação. Em poucos minutos tínhamos um site profissional funcionando. Nossa comunidade ficou mais conectada.",
+      "Agora temos um site lindo e recebemos doações online. Foi um divisor de águas para nossa igreja!",
     rating: 5,
   },
   {
-    name: "Pastora Maria Santos",
-    church: "Comunidade da Fé",
-    avatar: "MS",
+    name: "Pastora Ana",
+    church: "Ministério Luz do Mundo (MG)",
+    avatar: "PA",
     content:
-      "A facilidade de uso é impressionante. Não precisamos de conhecimento técnico para gerenciar eventos, blog e a área dos membros. Recomendo!",
+      "Fácil de usar, rápido de publicar. Nossa agenda de cultos está sempre atualizada e os membros adoraram.",
     rating: 5,
   },
   {
     name: "Pr. Carlos Oliveira",
-    church: "Igreja Presbiteriana Renovada",
+    church: "Igreja Presbiteriana Renovada (RJ)",
     avatar: "CO",
     content:
-      "O suporte é excelente e os recursos atendem perfeitamente nossas necessidades. O melhor investimento que fizemos para nossa presença online.",
+      "O suporte é excelente e os recursos atendem perfeitamente nossas necessidades. Recomendo a todas as igrejas!",
+    rating: 5,
+  },
+  {
+    name: "Missionária Ruth",
+    church: "Igreja Batista Nova Vida (BA)",
+    avatar: "MR",
+    content:
+      "Conseguimos organizar nossos ministérios e a comunicação melhorou muito. O chat de ministérios é fantástico!",
     rating: 5,
   },
 ];
 
 export const Testimonials = () => {
   return (
-    <section id="depoimentos" className="py-24 bg-muted/30">
+    <section id="depoimentos" className="py-20 sm:py-24 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-            O que dizem sobre nós
+            Igrejas que já confiam no Portal Igrejas
           </h2>
           <p className="text-lg text-muted-foreground">
-            Igrejas de todo o Brasil já estão usando o Portal Igrejas.
+            Veja o que pastores e líderes estão dizendo sobre nossa plataforma.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
           {testimonials.map((testimonial, index) => (
             <div
               key={index}
-              className="bg-card border border-border rounded-xl p-6"
+              className="bg-card border border-border rounded-xl p-6 relative"
             >
+              {/* Quote icon */}
+              <Quote className="absolute top-4 right-4 w-8 h-8 text-primary/10" />
+              
+              {/* Stars */}
               <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: testimonial.rating }).map((_, i) => (
                   <Star
                     key={i}
-                    className="w-5 h-5 fill-yellow-400 text-yellow-400"
+                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
                   />
                 ))}
               </div>
 
-              <p className="text-foreground mb-6 italic">
+              {/* Content */}
+              <p className="text-foreground mb-6 text-sm sm:text-base leading-relaxed">
                 "{testimonial.content}"
               </p>
 
+              {/* Author */}
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                  <span className="text-primary font-semibold">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                  <span className="text-primary font-semibold text-sm">
                     {testimonial.avatar}
                   </span>
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">
+                  <p className="font-semibold text-foreground text-sm sm:text-base">
                     {testimonial.name}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {testimonial.church}
                   </p>
                 </div>
