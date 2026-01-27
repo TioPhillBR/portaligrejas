@@ -3,12 +3,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRight, BarChart3, FileDown, FileSpreadsheet } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, Users, ArrowUpRight, ArrowDownRight, BarChart3, FileDown, FileSpreadsheet, Activity, Grid3X3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useReportExport } from "@/hooks/useReportExport";
+import CohortAnalysis from "@/components/platform/CohortAnalysis";
+import RetentionMetrics from "@/components/platform/RetentionMetrics";
 import {
   LineChart,
   Line,
@@ -343,9 +345,17 @@ const PlatformReports = () => {
       </div>
 
       <Tabs defaultValue="mrr" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="mrr">Evolução do MRR</TabsTrigger>
           <TabsTrigger value="distribution">Distribuição por Plano</TabsTrigger>
+          <TabsTrigger value="retention" className="gap-1">
+            <Activity className="h-3 w-3" />
+            Retenção
+          </TabsTrigger>
+          <TabsTrigger value="cohort" className="gap-1">
+            <Grid3X3 className="h-3 w-3" />
+            Cohort
+          </TabsTrigger>
           <TabsTrigger value="ltv">LTV por Cliente</TabsTrigger>
           <TabsTrigger value="forecast">Previsão de Receita</TabsTrigger>
         </TabsList>
@@ -460,6 +470,16 @@ const PlatformReports = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Retention Metrics */}
+        <TabsContent value="retention">
+          <RetentionMetrics churches={churches} history={history} />
+        </TabsContent>
+
+        {/* Cohort Analysis */}
+        <TabsContent value="cohort">
+          <CohortAnalysis churches={churches} history={history} />
         </TabsContent>
 
         {/* LTV per Client */}

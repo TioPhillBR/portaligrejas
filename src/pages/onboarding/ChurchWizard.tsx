@@ -231,7 +231,8 @@ const ChurchWizard = () => {
         navigate(`/checkout?church=${churchId}&plan=${selectedPlan}`);
       } else {
         toast.success("Igreja criada com sucesso!");
-        navigate(`/${data.slug}/admin`);
+        // Redirect to onboarding tutorial
+        navigate(`/onboarding/${data.slug}`);
       }
     } catch (error: any) {
       console.error("Error creating church:", error);

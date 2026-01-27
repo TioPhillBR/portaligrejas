@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import LandingPage from "./pages/landing/LandingPage";
 import CreateChurch from "./pages/landing/CreateChurch";
 import ChurchWizard from "./pages/onboarding/ChurchWizard";
+import OnboardingPage from "./pages/onboarding/OnboardingPage";
 
 // Auth pages
 import Login from "./pages/Login";
@@ -109,6 +110,8 @@ const App = () => (
               <Route path="/" element={<LandingPage />} />
               <Route path="/criar-igreja" element={<CreateChurch />} />
               <Route path="/criar-igreja/wizard" element={<ChurchWizard />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/onboarding/:slug" element={<OnboardingPage />} />
               <Route path="/igrejas" element={<ChurchesList />} />
               <Route path="/planos" element={<Pricing />} />
               <Route path="/checkout" element={<Checkout />} />
