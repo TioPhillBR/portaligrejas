@@ -11,6 +11,7 @@ import {
   Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import SetupChecklist from "@/components/admin/SetupChecklist";
 
 interface DashboardStats {
   events: number;
@@ -80,6 +81,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8">
+      {/* Setup Checklist */}
+      <SetupChecklist />
+
       {/* Page Header */}
       <div>
         <h1 className="text-3xl font-display font-bold text-foreground">
