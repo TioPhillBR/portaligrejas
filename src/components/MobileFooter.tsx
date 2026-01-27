@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Home, Calendar, Users, BookOpen, Mail, Menu, X, LogIn, User, Church, Heart, Image, Radio, HandCoins, HandHeart } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import ThemeToggle from "./ThemeToggle";
 import NotificationBell from "./NotificationBell";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 const mainNavItems = [
-  { label: "Início", href: "#inicio", icon: Home },
-  { label: "Eventos", href: "#eventos", icon: Calendar },
-  { label: "Ministérios", href: "#ministerios", icon: Users },
+  { label: "Início", href: "#inicio", icon: Home, sectionId: "inicio" },
+  { label: "Eventos", href: "#eventos", icon: Calendar, sectionId: "eventos" },
+  { label: "Ministérios", href: "#ministerios", icon: Users, sectionId: "ministerios" },
   { label: "Blog", href: "/blog", icon: BookOpen, isRoute: true },
 ];
 
@@ -31,9 +32,38 @@ const allNavItems = [
 
 const MobileFooter = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("inicio");
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Track active section based on scroll position
+  useEffect(() => {
+    if (location.pathname !== "/") return;
+
+    const handleScroll = () => {
+      const sections = ["inicio", "cultos", "eventos", "ministerios", "quem-somos", "galeria", "video", "doacoes", "oracao", "contato"];
+      const scrollPosition = window.scrollY + 150;
+
+      for (const sectionId of sections) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const offsetTop = element.offsetTop;
+          const offsetHeight = element.offsetHeight;
+          
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(sectionId);
+            break;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll(); // Initial check
+    
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
 
   const scrollToSection = (href: string, isRoute?: boolean) => {
     if (isRoute) {
@@ -52,39 +82,125 @@ const MobileFooter = () => {
     setIsMenuOpen(false);
   };
 
+  const isActive = (item: typeof mainNavItems[0]) => {
+    if (item.isRoute) {
+      return location.pathname === item.href;
+    }
+    return location.pathname === "/" && activeSection === item.sectionId;
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.3,
+        staggerChildren: 0.05,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.2 },
+    },
+  };
+
   return (
-    <footer className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-effect border-t border-border/50 safe-area-bottom">
+    <motion.footer 
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden glass-effect border-t border-border/50 safe-area-bottom"
+    >
       <nav className="flex items-center justify-around py-2 px-2">
         {mainNavItems.map((item) => {
           const Icon = item.icon;
+          const active = isActive(item);
+          
           return item.isRoute ? (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent/50 transition-colors"
-            >
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </Link>
+            <motion.div key={item.href} variants={itemVariants}>
+              <Link
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200",
+                  active 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-primary hover:bg-accent/50"
+                )}
+              >
+                <motion.div
+                  animate={active ? { scale: 1.1 } : { scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Icon className="h-5 w-5" />
+                </motion.div>
+                <span className={cn(
+                  "text-[10px] font-medium transition-colors",
+                  active && "text-primary font-semibold"
+                )}>
+                  {item.label}
+                </span>
+                {active && (
+                  <motion.div
+                    layoutId="activeIndicator"
+                    className="absolute -bottom-0.5 w-1 h-1 bg-primary rounded-full"
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </Link>
+            </motion.div>
           ) : (
-            <button
-              key={item.href}
-              onClick={() => scrollToSection(item.href)}
-              className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent/50 transition-colors"
-            >
-              <Icon className="h-5 w-5" />
-              <span className="text-[10px] font-medium">{item.label}</span>
-            </button>
+            <motion.div key={item.href} variants={itemVariants} className="relative">
+              <button
+                onClick={() => scrollToSection(item.href)}
+                className={cn(
+                  "flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all duration-200",
+                  active 
+                    ? "text-primary bg-primary/10" 
+                    : "text-muted-foreground hover:text-primary hover:bg-accent/50"
+                )}
+              >
+                <motion.div
+                  animate={active ? { scale: 1.1 } : { scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Icon className="h-5 w-5" />
+                </motion.div>
+                <span className={cn(
+                  "text-[10px] font-medium transition-colors",
+                  active && "text-primary font-semibold"
+                )}>
+                  {item.label}
+                </span>
+              </button>
+              {active && (
+                <motion.div
+                  layoutId="activeIndicator"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
+            </motion.div>
           );
         })}
 
         {/* Hamburger Menu */}
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetTrigger asChild>
-            <button className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent/50 transition-colors">
+            <motion.button 
+              variants={itemVariants}
+              className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent/50 transition-colors"
+            >
               <Menu className="h-5 w-5" />
               <span className="text-[10px] font-medium">Menu</span>
-            </button>
+            </motion.button>
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
             <SheetHeader className="pb-4 border-b border-border">
@@ -171,7 +287,7 @@ const MobileFooter = () => {
           </SheetContent>
         </Sheet>
       </nav>
-    </footer>
+    </motion.footer>
   );
 };
 

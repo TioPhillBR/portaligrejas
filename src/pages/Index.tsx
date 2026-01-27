@@ -14,6 +14,7 @@ import PrayerRequestSection from "@/components/sections/PrayerRequestSection";
 import ContactSection from "@/components/sections/ContactSection";
 import Footer from "@/components/Footer";
 import MobileFooter from "@/components/MobileFooter";
+import MobileContactFooter from "@/components/MobileContactFooter";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
@@ -79,6 +80,7 @@ const Index = () => {
       </main>
       
       <Footer />
+      <MobileContactFooter />
       <MobileFooter />
       
         {/* Floating Elements */}
