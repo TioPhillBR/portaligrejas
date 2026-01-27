@@ -13,6 +13,7 @@ import PhotoGallery from "@/components/PhotoGallery";
 import RSVPButton from "@/components/RSVPButton";
 import Breadcrumb from "@/components/Breadcrumb";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
+import PageTransition from "@/components/PageTransition";
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -102,7 +103,7 @@ const EventDetails = () => {
   const eventDate = new Date(event.date);
 
   return (
-    <>
+    <PageTransition>
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
@@ -245,7 +246,7 @@ const EventDetails = () => {
       </main>
       <Footer />
       <ScrollToTopButton />
-    </>
+    </PageTransition>
   );
 };
 

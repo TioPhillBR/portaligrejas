@@ -13,6 +13,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Breadcrumb from "@/components/Breadcrumb";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
+import PageTransition from "@/components/PageTransition";
 
 interface BlogTag {
   id: string;
@@ -128,7 +129,7 @@ const Blog = () => {
   const hasActiveFilters = searchQuery || selectedCategory || selectedTags.length > 0;
 
   return (
-    <>
+    <PageTransition>
       <Header />
       <main className="min-h-screen pt-24 pb-16">
         <div className="container-custom">
@@ -381,7 +382,7 @@ const Blog = () => {
       </main>
       <Footer />
       <ScrollToTopButton />
-    </>
+    </PageTransition>
   );
 };
 

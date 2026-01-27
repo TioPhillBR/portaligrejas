@@ -16,6 +16,7 @@ import Footer from "@/components/Footer";
 import WhatsAppButton from "@/components/WhatsAppButton";
 import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import ScrollToTopButton from "@/components/ScrollToTopButton";
+import PageTransition from "@/components/PageTransition";
 import { useHomeSections } from "@/hooks/useHomeSections";
 
 // Map section keys to components
@@ -71,8 +72,9 @@ const Index = () => {
     : defaultOrder.map((key) => ({ section_key: key, title: null, subtitle: null, content: {} }));
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <PageTransition>
+      <div className="min-h-screen bg-background">
+        <Header />
       
       <main>
         {orderedSections.map((section) => {
@@ -93,11 +95,12 @@ const Index = () => {
       
       <Footer />
       
-      {/* Floating Elements */}
-      <WhatsAppButton />
-      <PWAInstallPrompt />
-      <ScrollToTopButton />
-    </div>
+        {/* Floating Elements */}
+        <WhatsAppButton />
+        <PWAInstallPrompt />
+        <ScrollToTopButton />
+      </div>
+    </PageTransition>
   );
 };
 
