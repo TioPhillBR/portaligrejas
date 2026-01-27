@@ -64,6 +64,12 @@ const AdminSubscription = () => {
   const [couponValidating, setCouponValidating] = useState(false);
   const [couponValid, setCouponValid] = useState<boolean | null>(null);
   const [couponDiscount, setCouponDiscount] = useState<{ type: string; value: number } | null>(null);
+  const [proRataInfo, setProRataInfo] = useState<{
+    credit: number;
+    daysRemaining: number;
+    unusedValue: number;
+  } | null>(null);
+  const [calculatingProRata, setCalculatingProRata] = useState(false);
 
   useEffect(() => {
     if (church?.id) {
@@ -159,6 +165,52 @@ const AdminSubscription = () => {
     return Math.max(0, originalPrice - couponDiscount.value);
   };
 
+  const calculateProRata = async (newPlan: string) => {
+    if (!churchData) return;
+
+    const currentPlan = churchData.plan || "free";
+    const isDowngrade = PLANS[newPlan].price < PLANS[currentPlan].price;
+
+    if (!isDowngrade || currentPlan === "free") {
+      setProRataInfo(null);
+      return;
+    }
+
+    setCalculatingProRata(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-prorata`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session?.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            churchId: churchData.id,
+            currentPlan,
+            newPlan,
+          }),
+        }
+      );
+
+      const result = await response.json();
+      if (result.success) {
+        setProRataInfo({
+          credit: result.proRataCredit,
+          daysRemaining: result.daysRemaining,
+          unusedValue: result.unusedValue,
+        });
+      }
+    } catch (error) {
+      console.error("Error calculating pro-rata:", error);
+    } finally {
+      setCalculatingProRata(false);
+    }
+  };
+
   const handleChangePlan = async (newPlan: string) => {
     if (!churchData) return;
 
@@ -211,9 +263,30 @@ const AdminSubscription = () => {
         clearCoupon();
       }
     } else {
-      // Para downgrade, agendar para próximo ciclo
+      // Para downgrade, calcular pro-rata e agendar
       setProcessing(true);
       try {
+        // Calculate pro-rata credit
+        const { data: session } = await supabase.auth.getSession();
+        
+        const proRataResponse = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/calculate-prorata`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.session?.access_token}`,
+            },
+            body: JSON.stringify({
+              churchId: churchData.id,
+              currentPlan,
+              newPlan,
+            }),
+          }
+        );
+
+        const proRataResult = await proRataResponse.json();
+
         const { error } = await supabase
           .from("churches")
           .update({
@@ -221,19 +294,25 @@ const AdminSubscription = () => {
               ...churchData.settings,
               pending_plan: newPlan,
               pending_plan_date: new Date().toISOString(),
+              pending_pro_rata_credit: proRataResult.proRataCredit || 0,
             },
           })
           .eq("id", churchData.id);
 
         if (error) throw error;
 
-        toast.success(`Downgrade para ${PLANS[newPlan].name} agendado para o próximo ciclo de faturamento`);
+        const creditMessage = proRataResult.proRataCredit > 0 
+          ? ` Você terá R$ ${proRataResult.proRataCredit.toFixed(2)} de crédito.`
+          : "";
+
+        toast.success(`Downgrade para ${PLANS[newPlan].name} agendado.${creditMessage}`);
         fetchChurchData();
       } catch (error: any) {
         toast.error("Erro ao agendar mudança de plano");
       } finally {
         setProcessing(false);
         setChangePlanDialog(false);
+        setProRataInfo(null);
       }
     }
   };

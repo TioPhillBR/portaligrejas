@@ -23,6 +23,7 @@ import {
   Tag,
   Palette,
   CreditCard,
+  Receipt,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -50,6 +51,7 @@ const sidebarItems = [
   { icon: Palette, label: "Temas", href: "/admin/temas" },
   { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
   { icon: CreditCard, label: "Assinatura", href: "/admin/assinatura" },
+  { icon: Receipt, label: "Faturas", href: "/admin/faturas" },
 ];
 
 const AdminLayout = () => {

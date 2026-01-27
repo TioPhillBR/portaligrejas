@@ -22,6 +22,12 @@ interface Church {
   owner_id: string | null;
   created_at: string;
   updated_at: string;
+  pro_rata_credit?: number;
+  current_period_start?: string;
+  current_period_end?: string;
+  payment_overdue_at?: string;
+  asaas_subscription_id?: string;
+  asaas_customer_id?: string;
 }
 
 interface ChurchMember {

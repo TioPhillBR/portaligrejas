@@ -410,6 +410,8 @@ export type Database = {
           asaas_customer_id: string | null
           asaas_subscription_id: string | null
           created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
           description: string | null
           email: string | null
           id: string
@@ -419,6 +421,7 @@ export type Database = {
           payment_overdue_at: string | null
           phone: string | null
           plan: string | null
+          pro_rata_credit: number | null
           settings: Json | null
           slug: string
           social_links: Json | null
@@ -434,6 +437,8 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -443,6 +448,7 @@ export type Database = {
           payment_overdue_at?: string | null
           phone?: string | null
           plan?: string | null
+          pro_rata_credit?: number | null
           settings?: Json | null
           slug: string
           social_links?: Json | null
@@ -458,6 +464,8 @@ export type Database = {
           asaas_customer_id?: string | null
           asaas_subscription_id?: string | null
           created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -467,6 +475,7 @@ export type Database = {
           payment_overdue_at?: string | null
           phone?: string | null
           plan?: string | null
+          pro_rata_credit?: number | null
           settings?: Json | null
           slug?: string
           social_links?: Json | null
@@ -1109,6 +1118,77 @@ export type Database = {
             columns: ["ministry_id"]
             isOneToOne: false
             referencedRelation: "ministries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_history: {
+        Row: {
+          amount: number
+          asaas_payment_id: string | null
+          asaas_subscription_id: string | null
+          billing_type: string | null
+          church_id: string
+          coupon_code: string | null
+          created_at: string
+          description: string | null
+          discount_amount: number | null
+          due_date: string | null
+          id: string
+          invoice_url: string | null
+          original_amount: number | null
+          paid_at: string | null
+          payment_method: string | null
+          plan: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_type?: string | null
+          church_id: string
+          coupon_code?: string | null
+          created_at?: string
+          description?: string | null
+          discount_amount?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_url?: string | null
+          original_amount?: number | null
+          paid_at?: string | null
+          payment_method?: string | null
+          plan?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          asaas_payment_id?: string | null
+          asaas_subscription_id?: string | null
+          billing_type?: string | null
+          church_id?: string
+          coupon_code?: string | null
+          created_at?: string
+          description?: string | null
+          discount_amount?: number | null
+          due_date?: string | null
+          id?: string
+          invoice_url?: string | null
+          original_amount?: number | null
+          paid_at?: string | null
+          payment_method?: string | null
+          plan?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_church_id_fkey"
+            columns: ["church_id"]
+            isOneToOne: false
+            referencedRelation: "churches"
             referencedColumns: ["id"]
           },
         ]

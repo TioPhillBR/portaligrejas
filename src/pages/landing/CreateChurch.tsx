@@ -9,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { PortalLogo } from "@/components/PortalLogo";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, CheckCircle2, Church, Mail, Phone, User } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Church, Mail, Phone, User, Gift, Sparkles } from "lucide-react";
 
 const createChurchSchema = z.object({
   churchName: z.string().min(3, "Nome deve ter pelo menos 3 caracteres").max(100),
@@ -36,6 +37,12 @@ const CreateChurch = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
+  const [grantedAccount, setGrantedAccount] = useState<{
+    hasGrantedAccount: boolean;
+    plan?: string;
+    expiresAt?: string;
+  } | null>(null);
+  const [checkingFreeAccount, setCheckingFreeAccount] = useState(false);
 
   const initialSlug = searchParams.get("slug") || "";
 
@@ -57,6 +64,44 @@ const CreateChurch = () => {
   });
 
   const slug = watch("slug");
+  const userEmail = watch("userEmail");
+
+  // Check for granted free account when user enters email
+  useEffect(() => {
+    const checkFreeAccount = async () => {
+      const emailToCheck = user?.email || userEmail;
+      if (!emailToCheck || emailToCheck.length < 5) {
+        setGrantedAccount(null);
+        return;
+      }
+
+      setCheckingFreeAccount(true);
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-free-account`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: emailToCheck }),
+          }
+        );
+
+        const result = await response.json();
+        if (result.hasGrantedAccount) {
+          setGrantedAccount(result);
+        } else {
+          setGrantedAccount(null);
+        }
+      } catch (error) {
+        console.error("Error checking free account:", error);
+      } finally {
+        setCheckingFreeAccount(false);
+      }
+    };
+
+    const debounce = setTimeout(checkFreeAccount, 500);
+    return () => clearTimeout(debounce);
+  }, [user?.email, userEmail]);
 
   // Normalize slug on change
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,6 +172,35 @@ const CreateChurch = () => {
         throw churchError;
       }
 
+      // Check and activate free account if available
+      const emailToCheck = user?.email || data.userEmail;
+      if (emailToCheck && grantedAccount?.hasGrantedAccount) {
+        try {
+          const activateResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/check-free-account`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: emailToCheck,
+                churchId,
+                churchName: data.churchName,
+              }),
+            }
+          );
+
+          const activateResult = await activateResponse.json();
+          if (activateResult.activated) {
+            toast({
+              title: "🎉 Conta gratuita ativada!",
+              description: `Seu plano ${activateResult.plan} foi ativado automaticamente.`,
+            });
+          }
+        } catch (error) {
+          console.error("Error activating free account:", error);
+        }
+      }
+
       toast({
         title: "Igreja criada com sucesso!",
         description: "Você será redirecionado para o painel administrativo.",
@@ -191,6 +265,26 @@ const CreateChurch = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                {/* Free Account Alert */}
+                {grantedAccount?.hasGrantedAccount && (
+                  <Alert className="border-purple-500 bg-purple-50 dark:bg-purple-950/20">
+                    <Gift className="h-4 w-4 text-purple-600" />
+                    <AlertTitle className="text-purple-800 dark:text-purple-400 flex items-center gap-2">
+                      <Sparkles className="h-4 w-4" />
+                      Conta Gratuita Disponível!
+                    </AlertTitle>
+                    <AlertDescription className="text-purple-700 dark:text-purple-300">
+                      Você possui um plano <strong>{grantedAccount.plan?.toUpperCase()}</strong> pré-aprovado.
+                      Ele será ativado automaticamente ao criar sua igreja!
+                      {grantedAccount.expiresAt && (
+                        <span className="block text-xs mt-1">
+                          Válido até: {new Date(grantedAccount.expiresAt).toLocaleDateString("pt-BR")}
+                        </span>
+                      )}
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 {step === 1 && (
                   <>
                     {/* Church Name */}
