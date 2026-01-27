@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PhotoGallery from "@/components/PhotoGallery";
+import RSVPButton from "@/components/RSVPButton";
 
 const EventDetails = () => {
   const { id } = useParams<{ id: string }>();
@@ -136,12 +138,15 @@ const EventDetails = () => {
               </h1>
 
               {event.description && (
-                <div className="prose prose-lg dark:prose-invert max-w-none">
+                <div className="prose prose-lg dark:prose-invert max-w-none mb-8">
                   <p className="text-muted-foreground whitespace-pre-wrap">
                     {event.description}
                   </p>
                 </div>
               )}
+
+              {/* Photo Gallery */}
+              <PhotoGallery entityType="event" entityId={event.id} />
             </div>
 
             {/* Sidebar */}
@@ -178,7 +183,12 @@ const EventDetails = () => {
                   )}
                 </div>
 
+                {/* RSVP Button */}
                 <div className="mt-6 pt-6 border-t">
+                  <RSVPButton eventId={event.id} />
+                </div>
+
+                <div className="mt-4 pt-4 border-t">
                   <Button onClick={handleShare} variant="outline" className="w-full">
                     <Share2 className="h-4 w-4 mr-2" />
                     Compartilhar Evento

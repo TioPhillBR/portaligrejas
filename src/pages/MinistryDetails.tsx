@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PhotoGallery from "@/components/PhotoGallery";
 import { icons } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -140,16 +141,19 @@ const MinistryDetails = () => {
               <h2 className="text-2xl font-bold mb-4">Sobre o Ministério</h2>
               
               {ministry.description ? (
-                <div className="prose prose-lg dark:prose-invert max-w-none">
+                <div className="prose prose-lg dark:prose-invert max-w-none mb-8">
                   <p className="text-muted-foreground whitespace-pre-wrap">
                     {ministry.description}
                   </p>
                 </div>
               ) : (
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground mb-8">
                   Mais informações sobre este ministério em breve.
                 </p>
               )}
+
+              {/* Photo Gallery */}
+              <PhotoGallery entityType="ministry" entityId={ministry.id} />
             </div>
 
             {/* Sidebar */}
