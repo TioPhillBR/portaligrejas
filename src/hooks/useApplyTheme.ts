@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -86,38 +86,62 @@ export const useApplyTheme = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  useEffect(() => {
-    const applyColors = (colors: ThemeColors, selector: string) => {
-      const root = document.querySelector(selector) as HTMLElement;
-      if (!root) return;
-
-      Object.entries(colors).forEach(([key, value]) => {
-        root.style.setProperty(`--${key}`, value);
-      });
-    };
-
-    // Apply light theme colors to :root
+  const applyTheme = useCallback(() => {
     const lightColors = themeSettings?.light_colors || defaultLightColors;
-    applyColors(lightColors as ThemeColors, ":root");
-
-    // Apply dark theme colors by adding a style element
     const darkColors = themeSettings?.dark_colors || defaultDarkColors;
     
-    // Create or update the dark theme style element
-    let darkStyleEl = document.getElementById("dynamic-dark-theme");
-    if (!darkStyleEl) {
-      darkStyleEl = document.createElement("style");
-      darkStyleEl.id = "dynamic-dark-theme";
-      document.head.appendChild(darkStyleEl);
+    // Create or update the dynamic theme style element
+    let styleEl = document.getElementById("dynamic-theme-colors");
+    if (!styleEl) {
+      styleEl = document.createElement("style");
+      styleEl.id = "dynamic-theme-colors";
+      document.head.appendChild(styleEl);
     }
 
+    // Generate CSS for light theme (applied to :root)
+    const lightCssVars = Object.entries(lightColors as ThemeColors)
+      .map(([key, value]) => `--${key}: ${value};`)
+      .join("\n    ");
+
+    // Generate CSS for dark theme (applied to .dark)
     const darkCssVars = Object.entries(darkColors as ThemeColors)
       .map(([key, value]) => `--${key}: ${value};`)
       .join("\n    ");
 
-    darkStyleEl.textContent = `.dark {\n    ${darkCssVars}\n  }`;
-
+    // Apply both themes with higher specificity
+    styleEl.textContent = `
+  :root {
+    ${lightCssVars}
+  }
+  .dark {
+    ${darkCssVars}
+  }
+`;
   }, [themeSettings]);
+
+  // Apply theme on settings change
+  useEffect(() => {
+    applyTheme();
+  }, [applyTheme]);
+
+  // Listen for theme toggle changes
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          // Force re-render when dark class changes
+          applyTheme();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, [applyTheme]);
 
   return { themeSettings };
 };
