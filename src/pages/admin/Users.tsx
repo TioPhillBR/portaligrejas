@@ -59,6 +59,7 @@ const roleLabels: Record<AppRole, string> = {
   secretaria: "Secretaria",
   midia: "Mídia",
   comunicacao: "Comunicação",
+  usuario: "Usuário",
 };
 
 const roleColors: Record<AppRole, string> = {
@@ -67,6 +68,7 @@ const roleColors: Record<AppRole, string> = {
   secretaria: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   midia: "bg-green-500/10 text-green-500 border-green-500/20",
   comunicacao: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  usuario: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
 
 const AdminUsers = () => {
