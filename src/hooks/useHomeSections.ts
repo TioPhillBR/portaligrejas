@@ -13,7 +13,7 @@ export interface HomeSection {
 
 export const useHomeSections = () => {
   return useQuery({
-    queryKey: ["home-sections"],
+    queryKey: ["home-sections-public"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("home_sections")
@@ -24,7 +24,8 @@ export const useHomeSections = () => {
       if (error) throw error;
       return data as HomeSection[];
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 30, // 30 seconds for faster updates
+    refetchOnWindowFocus: true,
   });
 };
 
