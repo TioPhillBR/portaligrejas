@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,6 +22,7 @@ interface HeroSectionProps {
 }
 
 const HeroSection = ({ sectionData }: HeroSectionProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const scrollToSection = (href: string) => {
@@ -44,30 +45,39 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
   const ctaButton2Text = content.cta_button_2_text || "Nossos Horários";
   const ctaButton2Link = content.cta_button_2_link || "#cultos";
 
-  const showFallbackBackground = !bgImage || imageError;
-
   return (
     <section
       id="inicio"
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
-      {/* Background Image or Fallback Gradient */}
-      {showFallbackBackground ? (
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
-        </div>
-      ) : (
-        <div className="absolute inset-0">
-          <img
-            src={bgImage}
-            alt="Hero background"
-            className="w-full h-full object-cover"
-            onError={() => setImageError(true)}
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
-        </div>
-      )}
+      {/* Fallback Gradient - always rendered as base layer */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-primary/60">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
+      </div>
+
+      {/* Image layer with fade animation */}
+      <AnimatePresence>
+        {bgImage && !imageError && (
+          <motion.div
+            key="hero-image"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: imageLoaded ? 1 : 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="absolute inset-0"
+          >
+            <img
+              src={bgImage}
+              alt="Hero background"
+              className="w-full h-full object-cover"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Content */}
       <div className="relative z-10 container-custom text-center text-white">

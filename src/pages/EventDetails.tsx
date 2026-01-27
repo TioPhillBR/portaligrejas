@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import MobileFooter from "@/components/MobileFooter";
 import PhotoGallery from "@/components/PhotoGallery";
 import RSVPButton from "@/components/RSVPButton";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -105,7 +106,7 @@ const EventDetails = () => {
   return (
     <PageTransition>
       <Header />
-      <main className="min-h-screen pt-24 pb-16">
+      <main className="min-h-screen pt-24 pb-24 md:pb-16">
         <div className="container-custom">
           {/* Breadcrumb */}
           <Breadcrumb 
@@ -245,6 +246,7 @@ const EventDetails = () => {
         </div>
       </main>
       <Footer />
+      <MobileFooter />
       <ScrollToTopButton />
     </PageTransition>
   );
