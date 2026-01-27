@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,30 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const content = sectionData?.content || {};
+  const bgImage = content.background_image;
+
+  // Preload image as soon as URL is available
+  useEffect(() => {
+    if (!bgImage) return;
+
+    const img = new Image();
+    img.src = bgImage;
+    
+    img.onload = () => {
+      setImageLoaded(true);
+    };
+    
+    img.onerror = () => {
+      setImageError(true);
+    };
+
+    return () => {
+      img.onload = null;
+      img.onerror = null;
+    };
+  }, [bgImage]);
+
   const scrollToSection = (href: string) => {
     const element = document.querySelector(href);
     if (element) {
@@ -32,8 +56,6 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
     }
   };
 
-  const content = sectionData?.content || {};
-  const bgImage = content.background_image;
   const title = sectionData?.title || "Bem-vindo à Nossa Igreja";
   const badge = content.badge || "✦ Bem-vindo à nossa família ✦";
   const slogan = content.slogan || '"Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna."';
@@ -71,8 +93,6 @@ const HeroSection = ({ sectionData }: HeroSectionProps) => {
               src={bgImage}
               alt="Hero background"
               className="w-full h-full object-cover"
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageError(true)}
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/70" />
           </motion.div>
