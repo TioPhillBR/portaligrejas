@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationToggle } from "@/components/NotificationToggle";
 import NotificationBell from "@/components/NotificationBell";
+import MemberMobileFooter from "./MemberMobileFooter";
 
 const sidebarItems = [
   { icon: Home, label: "Início", href: "/membro" },
@@ -188,9 +189,12 @@ const MemberLayout = () => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 p-3 md:p-6 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 p-3 md:p-6 lg:p-8 overflow-x-hidden pb-20 lg:pb-8">
           <Outlet />
         </main>
+        
+        {/* Mobile Footer Navigation */}
+        <MemberMobileFooter />
       </div>
     </div>
   );
