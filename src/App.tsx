@@ -51,6 +51,7 @@ import AdminComments from "./pages/admin/Comments";
 import AdminHomeSections from "./pages/admin/HomeSections";
 import AdminEntityPhotos from "./pages/admin/EntityPhotos";
 import AdminThemeSettings from "./pages/admin/ThemeSettings";
+import AdminSubscription from "./pages/admin/Subscription";
 
 // Platform admin components
 import PlatformLayout from "./components/platform/PlatformLayout";
@@ -61,6 +62,7 @@ import PlatformUsers from "./pages/platform/PlatformUsers";
 import PlatformSubscriptions from "./pages/platform/PlatformSubscriptions";
 import PlatformReports from "./pages/platform/PlatformReports";
 import PlatformSettings from "./pages/platform/PlatformSettings";
+import PlatformCoupons from "./pages/platform/PlatformCoupons";
 
 // Member components
 import MemberLayout from "./components/member/MemberLayout";
@@ -122,6 +124,7 @@ const App = () => (
                 <Route path="usuarios" element={<PlatformUsers />} />
                 <Route path="assinaturas" element={<PlatformSubscriptions />} />
                 <Route path="relatorios" element={<PlatformReports />} />
+                <Route path="cupons" element={<PlatformCoupons />} />
                 <Route path="configuracoes" element={<PlatformSettings />} />
               </Route>
               
@@ -185,6 +188,7 @@ const App = () => (
                 <Route path="comentarios" element={<AdminComments />} />
                 <Route path="fotos/:entityType/:entityId" element={<AdminEntityPhotos />} />
                 <Route path="temas" element={<AdminThemeSettings />} />
+                <Route path="assinatura" element={<AdminSubscription />} />
               </Route>
               
               {/* ===== CHURCH MEMBER ROUTES (/:slug/membro) ===== */}
