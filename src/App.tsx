@@ -31,6 +31,7 @@ import ChurchesList from "./pages/ChurchesList";
 // Checkout pages
 import Checkout from "./pages/Checkout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
+import CheckoutRecovery from "./pages/CheckoutRecovery";
 import Pricing from "./pages/Pricing";
 
 // Admin components
@@ -117,6 +118,7 @@ const App = () => (
               <Route path="/planos" element={<Pricing />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/sucesso" element={<CheckoutSuccess />} />
+              <Route path="/checkout/recuperar" element={<CheckoutRecovery />} />
               
               {/* ===== AUTH PAGES ===== */}
               <Route path="/login" element={<Login />} />
