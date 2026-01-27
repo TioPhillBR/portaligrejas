@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,15 +91,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Wrapper component for church routes with forwardRef support
-const ChurchRouteWrapper = forwardRef<HTMLDivElement, { children: React.ReactNode }>(
-  ({ children }, ref) => (
-    <ChurchProvider ref={ref}>
-      <RouteGuard>{children}</RouteGuard>
-    </ChurchProvider>
-  )
+// Wrapper component for church routes
+const ChurchRouteWrapper = ({ children }: { children: React.ReactNode }) => (
+  <ChurchProvider>
+    <RouteGuard>{children}</RouteGuard>
+  </ChurchProvider>
 );
-ChurchRouteWrapper.displayName = "ChurchRouteWrapper";
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

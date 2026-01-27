@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode, forwardRef } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,8 +58,7 @@ interface ChurchProviderProps {
   slug?: string;
 }
 
-export const ChurchProvider = forwardRef<HTMLDivElement, ChurchProviderProps>(
-  ({ children, slug: propSlug }, ref) => {
+export const ChurchProvider = ({ children, slug: propSlug }: ChurchProviderProps) => {
   const { slug: paramSlug } = useParams<{ slug: string }>();
   const slug = propSlug || paramSlug;
   const { user } = useAuth();
@@ -146,12 +145,10 @@ export const ChurchProvider = forwardRef<HTMLDivElement, ChurchProviderProps>(
         refetch: fetchChurch,
       }}
     >
-      <div ref={ref}>{children}</div>
+      {children}
     </ChurchContext.Provider>
   );
-});
-
-ChurchProvider.displayName = "ChurchProvider";
+};
 
 export const useChurch = () => {
   const context = useContext(ChurchContext);
