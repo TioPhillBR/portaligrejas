@@ -54,7 +54,10 @@ interface UserWithRoles {
 }
 
 const roleLabels: Record<AppRole, string> = {
+  platform_admin: "Admin da Plataforma",
   super_admin: "Super Admin",
+  church_owner: "Dono da Igreja",
+  church_admin: "Admin da Igreja",
   lider_ministerio: "Líder de Ministério",
   secretaria: "Secretaria",
   midia: "Mídia",
@@ -63,7 +66,10 @@ const roleLabels: Record<AppRole, string> = {
 };
 
 const roleColors: Record<AppRole, string> = {
+  platform_admin: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   super_admin: "bg-red-500/10 text-red-500 border-red-500/20",
+  church_owner: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
+  church_admin: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
   lider_ministerio: "bg-purple-500/10 text-purple-500 border-purple-500/20",
   secretaria: "bg-blue-500/10 text-blue-500 border-blue-500/20",
   midia: "bg-green-500/10 text-green-500 border-green-500/20",
