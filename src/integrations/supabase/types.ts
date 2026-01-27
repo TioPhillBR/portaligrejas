@@ -407,6 +407,8 @@ export type Database = {
       churches: {
         Row: {
           address: string | null
+          asaas_customer_id: string | null
+          asaas_subscription_id: string | null
           created_at: string
           description: string | null
           email: string | null
@@ -414,6 +416,7 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string | null
+          payment_overdue_at: string | null
           phone: string | null
           plan: string | null
           settings: Json | null
@@ -428,6 +431,8 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -435,6 +440,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id?: string | null
+          payment_overdue_at?: string | null
           phone?: string | null
           plan?: string | null
           settings?: Json | null
@@ -449,6 +455,8 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          asaas_customer_id?: string | null
+          asaas_subscription_id?: string | null
           created_at?: string
           description?: string | null
           email?: string | null
@@ -456,6 +464,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string | null
+          payment_overdue_at?: string | null
           phone?: string | null
           plan?: string | null
           settings?: Json | null
