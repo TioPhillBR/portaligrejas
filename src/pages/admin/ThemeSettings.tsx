@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Check, Palette, Sun, Moon, RotateCcw } from "lucide-react";
+import { Check, Palette, Sun, Moon, RotateCcw, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useThemeSettings, presetThemes, ThemeColors } from "@/hooks/useThemeSettings";
 
 const colorLabels: Record<keyof ThemeColors, string> = {
@@ -186,11 +187,135 @@ const ThemePreview = ({ colors, name }: { colors: ThemeColors; name: string }) =
   </div>
 );
 
+// Live Preview Component - shows a full preview of the site with current colors
+const LiveSitePreview = ({ lightColors, darkColors, isDark }: { lightColors: ThemeColors; darkColors: ThemeColors; isDark: boolean }) => {
+  const colors = isDark ? darkColors : lightColors;
+  
+  return (
+    <div 
+      className="rounded-xl border overflow-hidden shadow-lg"
+      style={{
+        backgroundColor: `hsl(${colors.background})`,
+        borderColor: `hsl(${colors.border})`,
+      }}
+    >
+      {/* Fake Header */}
+      <div 
+        className="p-4 flex items-center justify-between"
+        style={{ borderBottom: `1px solid hsl(${colors.border})` }}
+      >
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-8 h-8 rounded-full"
+            style={{ backgroundColor: `hsl(${colors.gold})` }}
+          />
+          <span 
+            className="font-bold text-sm"
+            style={{ color: `hsl(${colors.foreground})` }}
+          >
+            Igreja Luz
+          </span>
+        </div>
+        <div className="flex gap-4">
+          {["Início", "Sobre", "Eventos"].map((item) => (
+            <span 
+              key={item}
+              className="text-xs"
+              style={{ color: `hsl(${colors["muted-foreground"]})` }}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Fake Hero */}
+      <div 
+        className="p-6 text-center"
+        style={{ 
+          background: `linear-gradient(to bottom, hsl(${colors.primary}), hsl(${colors.primary}) 80%)` 
+        }}
+      >
+        <span 
+          className="inline-block px-3 py-1 rounded-full text-xs mb-3"
+          style={{ 
+            backgroundColor: `hsl(${colors.gold} / 0.3)`,
+            color: `hsl(${colors.gold})` 
+          }}
+        >
+          ✦ Bem-vindo ✦
+        </span>
+        <h2 
+          className="text-xl font-bold mb-2"
+          style={{ color: `hsl(${colors["primary-foreground"]})` }}
+        >
+          Nossa Igreja
+        </h2>
+        <p 
+          className="text-xs opacity-80 mb-4"
+          style={{ color: `hsl(${colors["primary-foreground"]})` }}
+        >
+          Um lugar de fé e amor
+        </p>
+        <div className="flex gap-2 justify-center">
+          <div 
+            className="px-4 py-2 rounded text-xs font-medium"
+            style={{ 
+              backgroundColor: `hsl(${colors.gold})`,
+              color: `hsl(${colors["gold-foreground"]})` 
+            }}
+          >
+            Conheça
+          </div>
+          <div 
+            className="px-4 py-2 rounded text-xs font-medium border"
+            style={{ 
+              borderColor: `hsl(${colors["primary-foreground"]} / 0.3)`,
+              color: `hsl(${colors["primary-foreground"]})` 
+            }}
+          >
+            Horários
+          </div>
+        </div>
+      </div>
+
+      {/* Fake Cards Section */}
+      <div className="p-4 grid grid-cols-3 gap-3">
+        {[1, 2, 3].map((i) => (
+          <div 
+            key={i}
+            className="rounded-lg p-3"
+            style={{ 
+              backgroundColor: `hsl(${colors.card})`,
+              border: `1px solid hsl(${colors.border})` 
+            }}
+          >
+            <div 
+              className="w-6 h-6 rounded mb-2"
+              style={{ backgroundColor: `hsl(${colors.primary} / 0.2)` }}
+            />
+            <div 
+              className="h-2 rounded mb-1"
+              style={{ backgroundColor: `hsl(${colors.foreground} / 0.8)`, width: "70%" }}
+            />
+            <div 
+              className="h-2 rounded"
+              style={{ backgroundColor: `hsl(${colors["muted-foreground"]} / 0.5)`, width: "50%" }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const AdminThemeSettings = () => {
   const { settings, isLoading, updateTheme, isUpdating } = useThemeSettings();
   const [activeTheme, setActiveTheme] = useState("royal-blue-gold");
   const [lightColors, setLightColors] = useState<ThemeColors | null>(null);
   const [darkColors, setDarkColors] = useState<ThemeColors | null>(null);
+  const [livePreviewEnabled, setLivePreviewEnabled] = useState(true);
+  const [previewDarkMode, setPreviewDarkMode] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -200,6 +325,37 @@ const AdminThemeSettings = () => {
     }
   }, [settings]);
 
+  // Apply live preview to the page
+  useEffect(() => {
+    if (!livePreviewEnabled || !lightColors || !darkColors) return;
+
+    const applyPreviewColors = (colors: ThemeColors, selector: string) => {
+      const root = document.querySelector(selector) as HTMLElement;
+      if (!root) return;
+
+      Object.entries(colors).forEach(([key, value]) => {
+        root.style.setProperty(`--${key}`, value);
+      });
+    };
+
+    // Apply light theme colors to :root
+    applyPreviewColors(lightColors, ":root");
+
+    // Apply dark theme colors
+    let darkStyleEl = document.getElementById("preview-dark-theme");
+    if (!darkStyleEl) {
+      darkStyleEl = document.createElement("style");
+      darkStyleEl.id = "preview-dark-theme";
+      document.head.appendChild(darkStyleEl);
+    }
+
+    const darkCssVars = Object.entries(darkColors)
+      .map(([key, value]) => `--${key}: ${value};`)
+      .join("\n    ");
+
+    darkStyleEl.textContent = `.dark {\n    ${darkCssVars}\n  }`;
+  }, [lightColors, darkColors, livePreviewEnabled]);
+
   const handleApplyPreset = (presetKey: string) => {
     const preset = presetThemes[presetKey as keyof typeof presetThemes];
     if (!preset) return;
@@ -208,7 +364,7 @@ const AdminThemeSettings = () => {
     setLightColors(preset.light);
     setDarkColors(preset.dark);
     
-    toast.info("Paleta aplicada! Clique em Salvar para confirmar.");
+    toast.info("Paleta aplicada! Veja o preview e clique em Salvar para confirmar.");
   };
 
   const handleUpdateLightColor = (key: keyof ThemeColors, value: string) => {
@@ -231,8 +387,6 @@ const AdminThemeSettings = () => {
     }, {
       onSuccess: () => {
         toast.success("Tema salvo com sucesso!");
-        // Force reload to apply new theme
-        window.location.reload();
       },
       onError: () => {
         toast.error("Erro ao salvar tema");
@@ -259,123 +413,172 @@ const AdminThemeSettings = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Configurações de Tema</h1>
-        <p className="text-muted-foreground">
-          Personalize as cores do site para modo claro e escuro
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Configurações de Tema</h1>
+          <p className="text-muted-foreground">
+            Personalize as cores do site para modo claro e escuro
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4 text-muted-foreground" />
+            <Label htmlFor="live-preview" className="text-sm">Preview ao Vivo</Label>
+            <Switch 
+              id="live-preview"
+              checked={livePreviewEnabled}
+              onCheckedChange={setLivePreviewEnabled}
+            />
+          </div>
+        </div>
       </div>
 
-      <Tabs defaultValue="presets" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="presets" className="gap-2">
-            <Palette className="h-4 w-4" />
-            Paletas Prontas
-          </TabsTrigger>
-          <TabsTrigger value="light" className="gap-2">
-            <Sun className="h-4 w-4" />
-            Tema Claro
-          </TabsTrigger>
-          <TabsTrigger value="dark" className="gap-2">
-            <Moon className="h-4 w-4" />
-            Tema Escuro
-          </TabsTrigger>
-        </TabsList>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Editor Panel */}
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="presets" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="presets" className="gap-2">
+                <Palette className="h-4 w-4" />
+                Paletas Prontas
+              </TabsTrigger>
+              <TabsTrigger value="light" className="gap-2">
+                <Sun className="h-4 w-4" />
+                Tema Claro
+              </TabsTrigger>
+              <TabsTrigger value="dark" className="gap-2">
+                <Moon className="h-4 w-4" />
+                Tema Escuro
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="presets" className="space-y-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            {Object.entries(presetThemes).map(([key, preset]) => (
-              <Card 
-                key={key}
-                className={`cursor-pointer transition-all hover:shadow-lg ${
-                  activeTheme === key ? "ring-2 ring-primary" : ""
-                }`}
-                onClick={() => handleApplyPreset(key)}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base">{preset.name}</CardTitle>
-                    {activeTheme === key && (
-                      <Check className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Claro</p>
-                      <ThemePreview colors={preset.light} name="Light" />
+            <TabsContent value="presets" className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                {Object.entries(presetThemes).map(([key, preset]) => (
+                  <Card 
+                    key={key}
+                    className={`cursor-pointer transition-all hover:shadow-lg ${
+                      activeTheme === key ? "ring-2 ring-primary" : ""
+                    }`}
+                    onClick={() => handleApplyPreset(key)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base">{preset.name}</CardTitle>
+                        {activeTheme === key && (
+                          <Check className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Claro</p>
+                          <ThemePreview colors={preset.light} name="Light" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Escuro</p>
+                          <ThemePreview colors={preset.dark} name="Dark" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="light" className="space-y-6">
+              {lightColors && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cores do Tema Claro</CardTitle>
+                    <CardDescription>
+                      Personalize cada cor individualmente. Use formato HSL (H S% L%)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {(Object.keys(colorLabels) as Array<keyof ThemeColors>).map((key) => (
+                        <ColorInput
+                          key={key}
+                          label={colorLabels[key]}
+                          value={lightColors[key]}
+                          onChange={(value) => handleUpdateLightColor(key, value)}
+                        />
+                      ))}
                     </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Escuro</p>
-                      <ThemePreview colors={preset.dark} name="Dark" />
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="dark" className="space-y-6">
+              {darkColors && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cores do Tema Escuro</CardTitle>
+                    <CardDescription>
+                      Personalize cada cor individualmente. Use formato HSL (H S% L%)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {(Object.keys(colorLabels) as Array<keyof ThemeColors>).map((key) => (
+                        <ColorInput
+                          key={key}
+                          label={colorLabels[key]}
+                          value={darkColors[key]}
+                          onChange={(value) => handleUpdateDarkColor(key, value)}
+                        />
+                      ))}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-between mt-6">
+            <Button variant="outline" onClick={handleResetToDefault}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Resetar para Padrão
+            </Button>
+            <Button onClick={handleSave} disabled={isUpdating}>
+              {isUpdating ? "Salvando..." : "Salvar Alterações"}
+            </Button>
           </div>
-        </TabsContent>
+        </div>
 
-        <TabsContent value="light" className="space-y-6">
-          {lightColors && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Cores do Tema Claro</CardTitle>
-                <CardDescription>
-                  Personalize cada cor individualmente. Use formato HSL (H S% L%)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {(Object.keys(colorLabels) as Array<keyof ThemeColors>).map((key) => (
-                    <ColorInput
-                      key={key}
-                      label={colorLabels[key]}
-                      value={lightColors[key]}
-                      onChange={(value) => handleUpdateLightColor(key, value)}
-                    />
-                  ))}
+        {/* Live Preview Panel */}
+        <div className="lg:col-span-1">
+          <Card className="sticky top-4">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Preview do Site</CardTitle>
+                <div className="flex items-center gap-2">
+                  <Sun className="h-4 w-4" />
+                  <Switch 
+                    checked={previewDarkMode}
+                    onCheckedChange={setPreviewDarkMode}
+                  />
+                  <Moon className="h-4 w-4" />
                 </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="dark" className="space-y-6">
-          {darkColors && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Cores do Tema Escuro</CardTitle>
-                <CardDescription>
-                  Personalize cada cor individualmente. Use formato HSL (H S% L%)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {(Object.keys(colorLabels) as Array<keyof ThemeColors>).map((key) => (
-                    <ColorInput
-                      key={key}
-                      label={colorLabels[key]}
-                      value={darkColors[key]}
-                      onChange={(value) => handleUpdateDarkColor(key, value)}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={handleResetToDefault}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Resetar para Padrão
-        </Button>
-        <Button onClick={handleSave} disabled={isUpdating}>
-          {isUpdating ? "Salvando..." : "Salvar Alterações"}
-        </Button>
+              </div>
+              <CardDescription>
+                {previewDarkMode ? "Modo Escuro" : "Modo Claro"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {lightColors && darkColors && (
+                <LiveSitePreview 
+                  lightColors={lightColors}
+                  darkColors={darkColors}
+                  isDark={previewDarkMode}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

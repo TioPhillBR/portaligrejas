@@ -12,6 +12,7 @@ interface MinistriesSectionProps {
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
     };
   };
 }
@@ -23,7 +24,7 @@ const MinistriesSection = ({ sectionData }: MinistriesSectionProps) => {
   const content = sectionData?.content || {};
   const badge = content.badge || "Servindo ao Senhor";
   const title = sectionData?.title || "Nossos Ministérios";
-  const subtitle = sectionData?.subtitle || "Cada ministério é uma oportunidade de servir a Deus e fazer a diferença na vida das pessoas.";
+  const subtitle = sectionData?.subtitle || content.description || "Cada ministério é uma oportunidade de servir a Deus e fazer a diferença na vida das pessoas.";
 
   const { data: ministries } = useQuery({
     queryKey: ["ministries-home"],

@@ -16,6 +16,7 @@ interface EventsSectionProps {
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
       button_text?: string;
       button_link?: string;
     };
@@ -29,7 +30,7 @@ const EventsSection = ({ sectionData }: EventsSectionProps) => {
   const content = sectionData?.content || {};
   const badge = content.badge || "Próximos Eventos";
   const title = sectionData?.title || "Agenda de Eventos";
-  const subtitle = sectionData?.subtitle || "Participe dos nossos eventos especiais e fortaleça sua caminhada com Deus.";
+  const subtitle = sectionData?.subtitle || content.description || "Participe dos nossos eventos especiais e fortaleça sua caminhada com Deus.";
   const buttonText = content.button_text || "Ver Todos os Eventos";
   const buttonLink = content.button_link || "/blog?category=eventos";
 

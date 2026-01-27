@@ -1,6 +1,6 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Calendar, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,18 +8,21 @@ import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ContactInfo {
+  icon: string;
+  title: string;
+  content: string;
+}
+
 interface ContactSectionProps {
   sectionData?: {
     title: string | null;
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
       map_embed_url?: string;
-      info?: Array<{
-        icon: string;
-        title: string;
-        content: string;
-      }>;
+      info?: ContactInfo[];
     };
   };
 }
@@ -29,28 +32,29 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Phone,
   Mail,
   Clock,
+  Calendar,
 };
 
-const defaultContactInfo = [
+const defaultContactInfo: ContactInfo[] = [
   {
     icon: "MapPin",
     title: "Endereço",
-    content: "Rua da Paz, 123 - Centro\nSão Paulo - SP, 01000-000",
+    content: "Rua da Paz, 123 - Centro",
   },
   {
     icon: "Phone",
     title: "Telefone",
-    content: "(11) 3456-7890\n(11) 99876-5432",
+    content: "(11) 1234-5678",
   },
   {
     icon: "Mail",
     title: "E-mail",
-    content: "contato@igrejaluz.com.br\nsecretaria@igrejaluz.com.br",
+    content: "contato@igreja.com.br",
   },
   {
     icon: "Clock",
-    title: "Atendimento",
-    content: "Segunda a Sexta: 9h às 18h\nSábado: 9h às 12h",
+    title: "Horário",
+    content: "Seg-Sex: 9h às 18h",
   },
 ];
 
@@ -69,8 +73,8 @@ const ContactSection = ({ sectionData }: ContactSectionProps) => {
   const content = sectionData?.content || {};
   const badge = content.badge || "Fale Conosco";
   const title = sectionData?.title || "Entre em Contato";
-  const subtitle = sectionData?.subtitle || "Estamos aqui para ajudar você. Entre em contato conosco por qualquer um dos canais abaixo.";
-  const mapEmbedUrl = content.map_embed_url || "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.0976951333286!2d-46.65342492378925!3d-23.564611261666665!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce59c8da0aa315%3A0xd59f9431f2c9776a!2sAv.%20Paulista%2C%20S%C3%A3o%20Paulo%20-%20SP!5e0!3m2!1spt-BR!2sbr!4v1706000000000!5m2!1spt-BR!2sbr";
+  const subtitle = sectionData?.subtitle || content.description || "Estamos aqui para ajudar você. Entre em contato conosco por qualquer um dos canais abaixo.";
+  const mapEmbedUrl = content.map_embed_url || "";
   const contactInfo = content.info && content.info.length > 0 ? content.info : defaultContactInfo;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -168,18 +172,26 @@ const ContactSection = ({ sectionData }: ContactSectionProps) => {
             </div>
 
             {/* Map */}
-            <div className="rounded-xl overflow-hidden h-64 bg-muted">
-              <iframe
-                src={mapEmbedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Localização da Igreja"
-              />
-            </div>
+            {mapEmbedUrl ? (
+              <div className="rounded-xl overflow-hidden h-64 bg-muted">
+                <iframe
+                  src={mapEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Localização da Igreja"
+                />
+              </div>
+            ) : (
+              <div className="rounded-xl h-64 bg-muted flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">
+                  Configure a URL do mapa no painel admin
+                </p>
+              </div>
+            )}
           </motion.div>
 
           {/* Contact Form */}

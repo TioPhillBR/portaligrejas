@@ -12,6 +12,7 @@ interface ServiceScheduleSectionProps {
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
     };
   };
 }
@@ -32,7 +33,7 @@ const ServiceScheduleSection = ({ sectionData }: ServiceScheduleSectionProps) =>
   const content = sectionData?.content || {};
   const badge = content.badge || "Programação";
   const title = sectionData?.title || "Horários de Culto";
-  const subtitle = sectionData?.subtitle || "Venha adorar conosco! Temos programações especiais para toda a família durante a semana.";
+  const subtitle = sectionData?.subtitle || content.description || "Venha adorar conosco! Temos programações especiais para toda a família durante a semana.";
 
   const { data: schedules } = useQuery({
     queryKey: ["service-schedules"],

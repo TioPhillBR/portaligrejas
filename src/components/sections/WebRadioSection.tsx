@@ -13,6 +13,7 @@ interface WebRadioSectionProps {
       badge?: string;
       radio_name?: string;
       stream_url?: string;
+      description?: string;
     };
   };
 }
@@ -27,11 +28,11 @@ const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
   const [isMuted, setIsMuted] = useState(false);
 
   const content = sectionData?.content || {};
-  const badge = content.badge || "24 Horas no Ar";
+  const badge = content.badge || "Ao Vivo";
   const title = sectionData?.title || "Web Rádio";
-  const subtitle = sectionData?.subtitle || "Ouça nossa programação com músicas, mensagens e reflexões para abençoar seu dia.";
+  const subtitle = sectionData?.subtitle || content.description || "Ouça nossa programação com músicas, mensagens e reflexões para abençoar seu dia.";
   const radioName = content.radio_name || "Rádio Luz do Evangelho";
-  const streamUrl = content.stream_url || "https://stream.zeno.fm/4d8z8h8dff8uv";
+  const streamUrl = content.stream_url || "";
 
   useEffect(() => {
     if (audioRef.current) {
@@ -40,6 +41,7 @@ const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
   }, [volume, isMuted]);
 
   const togglePlay = () => {
+    if (!streamUrl) return;
     if (audioRef.current) {
       if (isPlaying) {
         audioRef.current.pause();
@@ -58,7 +60,7 @@ const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
     <section id="radio" className="section-padding bg-primary text-primary-foreground" ref={ref}>
       <div className="container-custom">
         {/* Hidden Audio Element */}
-        <audio ref={audioRef} src={streamUrl} preload="none" />
+        {streamUrl && <audio ref={audioRef} src={streamUrl} preload="none" />}
 
         {/* Section Header */}
         <motion.div
@@ -111,7 +113,7 @@ const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
                     {radioName}
                   </h3>
                   <p className="text-white/60 text-sm mb-4">
-                    {isPlaying ? "🔴 Ao Vivo" : "Clique para ouvir"}
+                    {!streamUrl ? "Configure a URL do stream no painel admin" : isPlaying ? "🔴 Ao Vivo" : "Clique para ouvir"}
                   </p>
 
                   {/* Controls */}
@@ -121,6 +123,7 @@ const WebRadioSection = ({ sectionData }: WebRadioSectionProps) => {
                       onClick={togglePlay}
                       size="lg"
                       className="w-14 h-14 rounded-full bg-gold hover:bg-gold/90 text-gold-foreground"
+                      disabled={!streamUrl}
                     >
                       {isPlaying ? (
                         <Pause className="w-6 h-6" fill="currentColor" />

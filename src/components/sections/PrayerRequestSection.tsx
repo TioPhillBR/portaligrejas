@@ -13,6 +13,7 @@ interface PrayerRequestSectionProps {
     subtitle: string | null;
     content: {
       badge?: string;
+      description?: string;
       placeholder?: string;
       bible_verse?: string;
       bible_reference?: string;
@@ -27,9 +28,9 @@ const PrayerRequestSection = ({ sectionData }: PrayerRequestSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const content = sectionData?.content || {};
-  const badge = content.badge || "Pedido de Oração";
+  const badge = content.badge || "Oração";
   const title = sectionData?.title || "Pedido de Oração";
-  const subtitle = sectionData?.subtitle || "Compartilhe seu pedido conosco. Nossa equipe de intercessores estará orando por você. Seu pedido é confidencial.";
+  const subtitle = sectionData?.subtitle || content.description || "Compartilhe seu pedido conosco. Nossa equipe de intercessores estará orando por você. Seu pedido é confidencial.";
   const placeholder = content.placeholder || "Escreva aqui o seu pedido de oração...";
   const bibleVerse = content.bible_verse || '"Confessai as vossas culpas uns aos outros, e orai uns pelos outros, para que sareis."';
   const bibleReference = content.bible_reference || "Tiago 5:16";
