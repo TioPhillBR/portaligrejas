@@ -31,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import ContextualTooltip from "./ContextualTooltip";
 
 const sidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -191,6 +192,9 @@ const AdminLayout = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Contextual Tooltips */}
+      <ContextualTooltip />
     </div>
   );
 };
