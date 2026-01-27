@@ -114,14 +114,14 @@ const MemberDashboard = () => {
   }
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-4 md:space-y-6 w-full max-w-full overflow-hidden">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary to-primary/80 rounded-xl p-4 md:p-6 text-primary-foreground">
-        <h1 className="text-xl md:text-2xl lg:text-3xl font-display font-bold">
+        <h1 className="text-lg md:text-2xl lg:text-3xl font-display font-bold break-words">
           {getGreeting()}, {profile?.full_name?.split(" ")[0] || "Membro"}! 👋
         </h1>
-        <p className="mt-2 opacity-90 text-sm md:text-base">
-          Bem-vindo à sua área de membro. Aqui você pode participar dos grupos e acompanhar as novidades da igreja.
+        <p className="mt-2 opacity-90 text-xs md:text-base">
+          Bem-vindo à sua área de membro.
         </p>
       </div>
 
@@ -130,60 +130,60 @@ const MemberDashboard = () => {
         <Link to="/membro/perfil">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <User className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Perfil</span>
+              <span className="text-[10px] md:text-sm font-medium">Perfil</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/eventos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Calendar className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Eventos</span>
+              <span className="text-[10px] md:text-sm font-medium">Eventos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/ministerios">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Users className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Ministérios</span>
+              <span className="text-[10px] md:text-sm font-medium">Ministérios</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/grupos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <MessageCircle className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Grupos</span>
+              <span className="text-[10px] md:text-sm font-medium">Grupos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/avisos">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bell className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Bell className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Avisos</span>
+              <span className="text-[10px] md:text-sm font-medium">Avisos</span>
             </CardContent>
           </Card>
         </Link>
         <Link to="/membro/buscar">
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                <Search className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Search className="w-4 h-4 md:w-6 md:h-6 text-primary" />
               </div>
-              <span className="text-xs md:text-sm font-medium">Buscar</span>
+              <span className="text-[10px] md:text-sm font-medium">Buscar</span>
             </CardContent>
           </Card>
         </Link>
@@ -191,41 +191,41 @@ const MemberDashboard = () => {
 
       {/* Upcoming Events */}
       {upcomingEvents.length > 0 && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Próximos Eventos</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
+            <CardTitle className="text-base md:text-lg">Próximos Eventos</CardTitle>
             <Link to="/membro/eventos">
-              <Button variant="ghost" size="sm">
-                Ver todos <ChevronRight className="w-4 h-4 ml-1" />
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
+                Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>
             </Link>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
+            <div className="space-y-2 md:space-y-3">
               {upcomingEvents.map((event) => (
                 <Link
                   key={event.id}
                   to="/membro/eventos"
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                  className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg hover:bg-muted transition-colors"
                 >
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary">
-                    <span className="text-xs font-medium">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary flex-shrink-0">
+                    <span className="text-[10px] md:text-xs font-medium">
                       {format(new Date(event.date), "MMM", { locale: ptBR }).toUpperCase()}
                     </span>
-                    <span className="text-lg font-bold">
+                    <span className="text-sm md:text-lg font-bold">
                       {format(new Date(event.date), "d")}
                     </span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-medium truncate">{event.title}</h4>
+                    <h4 className="font-medium text-sm md:text-base truncate">{event.title}</h4>
                     {event.time && (
-                      <p className="text-sm text-muted-foreground">{event.time}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">{event.time}</p>
                     )}
                   </div>
                   {isToday(new Date(event.date)) && (
-                    <Badge>Hoje</Badge>
+                    <Badge className="text-[10px] md:text-xs flex-shrink-0">Hoje</Badge>
                   )}
-                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground flex-shrink-0" />
                 </Link>
               ))}
             </div>
@@ -233,24 +233,24 @@ const MemberDashboard = () => {
         </Card>
       )}
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4 md:gap-6">
         {/* My Ministries */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Meus Ministérios</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
+            <CardTitle className="text-base md:text-lg">Meus Ministérios</CardTitle>
             <Link to="/membro/ministerios">
-              <Button variant="ghost" size="sm">
-                Ver todos <ChevronRight className="w-4 h-4 ml-1" />
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
+                Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>
             </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
             {myMinistries.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Você ainda não participa de nenhum ministério</p>
+              <div className="text-center py-4 md:py-6 text-muted-foreground">
+                <Users className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Você ainda não participa de nenhum ministério</p>
                 <Link to="/membro/ministerios">
-                  <Button variant="link" className="mt-2">
+                  <Button variant="link" className="mt-2 text-sm">
                     Explorar ministérios
                   </Button>
                 </Link>
@@ -261,13 +261,13 @@ const MemberDashboard = () => {
                   <Link
                     key={ministry.id}
                     to={`/membro/grupos/${ministry.id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
+                    className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg hover:bg-muted transition-colors"
                   >
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-r ${ministry.color} flex items-center justify-center text-white font-bold`}>
+                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-r ${ministry.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
                       {ministry.name.charAt(0)}
                     </div>
-                    <span className="font-medium">{ministry.name}</span>
-                    <ChevronRight className="w-4 h-4 ml-auto text-muted-foreground" />
+                    <span className="font-medium text-sm md:text-base truncate flex-1 min-w-0">{ministry.name}</span>
+                    <ChevronRight className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground flex-shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -276,35 +276,35 @@ const MemberDashboard = () => {
         </Card>
 
         {/* Recent Announcements */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Avisos Recentes</CardTitle>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
+            <CardTitle className="text-base md:text-lg">Avisos Recentes</CardTitle>
             <Link to="/membro/avisos">
-              <Button variant="ghost" size="sm">
-                Ver todos <ChevronRight className="w-4 h-4 ml-1" />
+              <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
+                Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>
             </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-3 md:p-6 pt-0 md:pt-0">
             {recentBroadcasts.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
-                <Bell className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhum aviso recente</p>
+              <div className="text-center py-4 md:py-6 text-muted-foreground">
+                <Bell className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Nenhum aviso recente</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 {recentBroadcasts.map((broadcast) => (
                   <div
                     key={broadcast.id}
-                    className="p-3 rounded-lg bg-muted/50"
+                    className="p-2 md:p-3 rounded-lg bg-muted/50"
                   >
                     {broadcast.title && (
-                      <h4 className="font-medium text-sm">{broadcast.title}</h4>
+                      <h4 className="font-medium text-xs md:text-sm truncate">{broadcast.title}</h4>
                     )}
-                    <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2 mt-1">
                       {broadcast.content}
                     </p>
-                    <span className="text-xs text-muted-foreground mt-2 block">
+                    <span className="text-[10px] md:text-xs text-muted-foreground mt-2 block">
                       {new Date(broadcast.created_at).toLocaleDateString("pt-BR")}
                     </span>
                   </div>
