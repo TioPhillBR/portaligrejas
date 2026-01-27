@@ -52,24 +52,8 @@ const Index = () => {
     }
   }, [location.hash]);
 
-  // Default order if sections are not loaded yet
-  const defaultOrder = [
-    "hero",
-    "services",
-    "events",
-    "ministries",
-    "about",
-    "gallery",
-    "video",
-    "radio",
-    "donations",
-    "prayer",
-    "contact",
-  ];
-
-  const orderedSections = sections?.length
-    ? sections.filter((s) => sectionComponents[s.section_key])
-    : defaultOrder.map((key) => ({ section_key: key, title: null, subtitle: null, content: {} }));
+  // Only use sections from database - don't fallback to defaults which would show hidden sections
+  const orderedSections = sections?.filter((s) => sectionComponents[s.section_key]) || [];
 
   return (
     <PageTransition>
