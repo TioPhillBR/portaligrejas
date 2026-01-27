@@ -1,12 +1,13 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { PortalLogo } from "@/components/PortalLogo";
 import { Mail, MessageCircle, Instagram, Youtube, Shield, Lock } from "lucide-react";
 
-export const LandingFooter = () => {
+export const LandingFooter = forwardRef<HTMLElement, Record<string, never>>((_, ref) => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-card border-t border-border">
+    <footer ref={ref} className="bg-card border-t border-border">
       {/* Main footer content */}
       <div className="container mx-auto px-4 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
@@ -155,4 +156,6 @@ export const LandingFooter = () => {
       </div>
     </footer>
   );
-};
+});
+
+LandingFooter.displayName = "LandingFooter";
