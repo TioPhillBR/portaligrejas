@@ -83,47 +83,48 @@ export function useSetupChecklist() {
           }),
       ]);
 
+      const slug = church.slug;
       const checklist: ChecklistItem[] = [
         {
           id: "logo",
           label: "Adicionar logo da igreja",
           description: "Upload do logo que aparecerá no site e app",
-          href: "/admin/configuracoes",
+          href: `/${slug}/admin/configuracoes`,
           isCompleted: logoCheck,
         },
         {
           id: "settings",
           label: "Configurar informações básicas",
           description: "Nome, slogan e dados de contato da igreja",
-          href: "/admin/configuracoes",
+          href: `/${slug}/admin/configuracoes`,
           isCompleted: settingsCheck,
         },
         {
           id: "schedules",
           label: "Cadastrar horários de culto",
           description: "Defina os dias e horários das reuniões",
-          href: "/admin/horarios",
+          href: `/${slug}/admin/horarios`,
           isCompleted: schedulesCheck,
         },
         {
           id: "event",
           label: "Criar primeiro evento",
           description: "Adicione um evento para sua comunidade",
-          href: "/admin/eventos",
+          href: `/${slug}/admin/eventos`,
           isCompleted: eventCheck,
         },
         {
           id: "ministry",
           label: "Cadastrar um ministério",
           description: "Organize os ministérios da igreja",
-          href: "/admin/ministerios",
+          href: `/${slug}/admin/ministerios`,
           isCompleted: ministryCheck,
         },
         {
           id: "gallery",
           label: "Adicionar fotos na galeria",
           description: "Compartilhe momentos especiais",
-          href: "/admin/galeria",
+          href: `/${slug}/admin/galeria`,
           isCompleted: galleryCheck,
         },
       ];
