@@ -4,6 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
+    <!-- Build Version - Forces cache invalidation -->
+    <meta name="build-version" content="v2026.01.28.1" />
+    <meta name="build-timestamp" content="1738062000" />
+    
+    <!-- Service Worker Cleanup Script - MUST BE FIRST -->
+    <script>
+      // Force unregister old service workers to clear stale cache
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var registration of registrations) {
+            registration.unregister().then(function(success) {
+              if (success) {
+                console.log('[SW Cleanup] Service Worker unregistered successfully');
+              }
+            });
+          }
+        }).then(function() {
+          // Clear all caches
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              for (var name of names) {
+                caches.delete(name);
+                console.log('[SW Cleanup] Cache deleted:', name);
+              }
+            });
+          }
+        });
+      }
+    </script>
+    
     <!-- Theme initialization script - must be in head to prevent flash -->
     <script>
       (function() {
