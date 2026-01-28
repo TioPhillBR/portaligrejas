@@ -70,6 +70,7 @@ const AdminSubscription = () => {
     unusedValue: number;
   } | null>(null);
   const [calculatingProRata, setCalculatingProRata] = useState(false);
+  const [customerCpfCnpj, setCustomerCpfCnpj] = useState("");
 
   useEffect(() => {
     if (church?.id) {
@@ -218,6 +219,13 @@ const AdminSubscription = () => {
     const isUpgrade = PLANS[newPlan].price > PLANS[currentPlan].price;
 
     if (isUpgrade) {
+      // Validar CPF/CNPJ
+      const cleanCpfCnpj = customerCpfCnpj.replace(/\D/g, "");
+      if (!cleanCpfCnpj || (cleanCpfCnpj.length !== 11 && cleanCpfCnpj.length !== 14)) {
+        toast.error("Por favor, informe um CPF ou CNPJ válido");
+        return;
+      }
+
       // Para upgrade, redirecionar para checkout
       setProcessing(true);
       try {
@@ -236,7 +244,7 @@ const AdminSubscription = () => {
               plan: newPlan,
               customerName: churchData.name,
               customerEmail: churchData.email || "",
-              customerCpfCnpj: "",
+              customerCpfCnpj: cleanCpfCnpj,
               successUrl: window.location.href,
               cancelUrl: window.location.href,
               couponCode: couponValid ? couponCode.toUpperCase().trim() : undefined,
@@ -261,6 +269,7 @@ const AdminSubscription = () => {
         setProcessing(false);
         setChangePlanDialog(false);
         clearCoupon();
+        setCustomerCpfCnpj("");
       }
     } else {
       // Para downgrade, calcular pro-rata e agendar
@@ -578,55 +587,97 @@ const AdminSubscription = () => {
               </p>
 
               {PLANS[selectedPlan].price > currentPlan.price && (
-                <div className="space-y-3 p-4 bg-muted rounded-lg">
-                  <Label htmlFor="couponCode" className="flex items-center gap-2">
-                    <Ticket className="h-4 w-4" />
-                    Cupom de Desconto (opcional)
-                  </Label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Input
-                        id="couponCode"
-                        placeholder="Digite o código"
-                        value={couponCode}
-                        onChange={(e) => {
-                          setCouponCode(e.target.value.toUpperCase());
-                          setCouponValid(null);
-                        }}
-                        className="uppercase"
-                      />
-                      {couponValid !== null && (
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {couponValid ? (
-                            <Check className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <X className="h-4 w-4 text-red-500" />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={validateCoupon}
-                      disabled={!couponCode.trim() || couponValidating}
-                    >
-                      {couponValidating ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "Aplicar"
-                      )}
-                    </Button>
-                    {couponValid && (
+                <div className="space-y-4 p-4 bg-muted rounded-lg">
+                  {/* CPF/CNPJ Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="customerCpfCnpj">
+                      CPF ou CNPJ do responsável <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="customerCpfCnpj"
+                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                      value={customerCpfCnpj}
+                      onChange={(e) => {
+                        // Máscara simples para CPF/CNPJ
+                        const value = e.target.value.replace(/\D/g, "");
+                        if (value.length <= 11) {
+                          // CPF
+                          setCustomerCpfCnpj(
+                            value
+                              .replace(/(\d{3})(\d)/, "$1.$2")
+                              .replace(/(\d{3})(\d)/, "$1.$2")
+                              .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
+                          );
+                        } else {
+                          // CNPJ
+                          setCustomerCpfCnpj(
+                            value
+                              .substring(0, 14)
+                              .replace(/(\d{2})(\d)/, "$1.$2")
+                              .replace(/(\d{3})(\d)/, "$1.$2")
+                              .replace(/(\d{3})(\d)/, "$1/$2")
+                              .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
+                          );
+                        }
+                      }}
+                      maxLength={18}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Necessário para emissão de nota fiscal
+                    </p>
+                  </div>
+
+                  {/* Coupon Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="couponCode" className="flex items-center gap-2">
+                      <Ticket className="h-4 w-4" />
+                      Cupom de Desconto (opcional)
+                    </Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Input
+                          id="couponCode"
+                          placeholder="Digite o código"
+                          value={couponCode}
+                          onChange={(e) => {
+                            setCouponCode(e.target.value.toUpperCase());
+                            setCouponValid(null);
+                          }}
+                          className="uppercase"
+                        />
+                        {couponValid !== null && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            {couponValid ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <X className="h-4 w-4 text-red-500" />
+                            )}
+                          </div>
+                        )}
+                      </div>
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={clearCoupon}
+                        variant="outline"
+                        onClick={validateCoupon}
+                        disabled={!couponCode.trim() || couponValidating}
                       >
-                        <X className="h-4 w-4" />
+                        {couponValidating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Aplicar"
+                        )}
                       </Button>
-                    )}
+                      {couponValid && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={clearCoupon}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   {couponValid && couponDiscount && (
                     <div className="text-sm space-y-1">
@@ -655,6 +706,8 @@ const AdminSubscription = () => {
               onClick={() => {
                 setChangePlanDialog(false);
                 setSelectedPlan(null);
+                setCustomerCpfCnpj("");
+                clearCoupon();
               }}
             >
               Cancelar
