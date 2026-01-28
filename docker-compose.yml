@@ -21,15 +21,63 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    networks:
+      - traefik-network
     labels:
+      # Traefik enable
       - "traefik.enable=true"
+      
+      # Main domain router (HTTPS)
       - "traefik.http.routers.portal-igrejas.rule=Host(`portaligrejas.com.br`)"
+      - "traefik.http.routers.portal-igrejas.entrypoints=websecure"
+      - "traefik.http.routers.portal-igrejas.tls=true"
+      - "traefik.http.routers.portal-igrejas.tls.certresolver=letsencrypt"
+      
+      # WWW redirect router
+      - "traefik.http.routers.portal-igrejas-www.rule=Host(`www.portaligrejas.com.br`)"
+      - "traefik.http.routers.portal-igrejas-www.entrypoints=websecure"
+      - "traefik.http.routers.portal-igrejas-www.tls=true"
+      - "traefik.http.routers.portal-igrejas-www.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.portal-igrejas-www.middlewares=www-to-non-www"
+      
+      # HTTP to HTTPS redirect
+      - "traefik.http.routers.portal-igrejas-http.rule=Host(`portaligrejas.com.br`) || Host(`www.portaligrejas.com.br`)"
+      - "traefik.http.routers.portal-igrejas-http.entrypoints=web"
+      - "traefik.http.routers.portal-igrejas-http.middlewares=https-redirect"
+      
+      # Middlewares
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.regex=^https://www\\.(.*)"
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.replacement=https://$${1}"
+      - "traefik.http.middlewares.www-to-non-www.redirectregex.permanent=true"
+      
+      # Service
       - "traefik.http.services.portal-igrejas.loadbalancer.server.port=3000"
 
-# Para fazer o deploy via Docker:
-# 1. Crie um arquivo .env na raiz com:
+networks:
+  traefik-network:
+    external: true
+
+# ============================================
+# INSTRUÇÕES DE DEPLOY COM DOMÍNIO CUSTOMIZADO
+# ============================================
+#
+# 1. Criar arquivo .env na raiz:
 #    VITE_SUPABASE_URL=https://nyxnvsaivmvllqevgmeh.supabase.co
-#    VITE_SUPABASE_PUBLISHABLE_KEY=sua-anon-key
+#    VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 #    VITE_SUPABASE_PROJECT_ID=nyxnvsaivmvllqevgmeh
-# 2. Execute: docker-compose build --no-cache
-# 3. Execute: docker-compose up -d
+#
+# 2. Configurar DNS no provedor de domínio:
+#    - Registro A: @ -> IP do servidor
+#    - Registro A: www -> IP do servidor
+#
+# 3. Executar:
+#    docker-compose build --no-cache
+#    docker-compose up -d
+#
+# 4. O Traefik irá automaticamente:
+#    - Obter certificado SSL via Let's Encrypt
+#    - Redirecionar HTTP -> HTTPS
+#    - Redirecionar www -> domínio principal
+# ============================================
