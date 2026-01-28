@@ -12,6 +12,7 @@ import { useChurch } from "@/contexts/ChurchContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { validateCpfCnpj, maskCpfCnpj } from "@/lib/cpfCnpjValidator";
 
 interface PlanInfo {
   name: string;
@@ -71,6 +72,7 @@ const AdminSubscription = () => {
   } | null>(null);
   const [calculatingProRata, setCalculatingProRata] = useState(false);
   const [customerCpfCnpj, setCustomerCpfCnpj] = useState("");
+  const [cpfCnpjValidation, setCpfCnpjValidation] = useState<{ valid: boolean; message: string } | null>(null);
 
   useEffect(() => {
     if (church?.id) {
@@ -219,12 +221,13 @@ const AdminSubscription = () => {
     const isUpgrade = PLANS[newPlan].price > PLANS[currentPlan].price;
 
     if (isUpgrade) {
-      // Validar CPF/CNPJ
-      const cleanCpfCnpj = customerCpfCnpj.replace(/\D/g, "");
-      if (!cleanCpfCnpj || (cleanCpfCnpj.length !== 11 && cleanCpfCnpj.length !== 14)) {
-        toast.error("Por favor, informe um CPF ou CNPJ válido");
+      // Validar CPF/CNPJ com algoritmo de dígitos verificadores
+      const validation = validateCpfCnpj(customerCpfCnpj);
+      if (!validation.valid) {
+        toast.error(validation.message);
         return;
       }
+      const cleanCpfCnpj = customerCpfCnpj.replace(/\D/g, "");
 
       // Para upgrade, redirecionar para checkout
       setProcessing(true);
@@ -270,6 +273,7 @@ const AdminSubscription = () => {
         setChangePlanDialog(false);
         clearCoupon();
         setCustomerCpfCnpj("");
+        setCpfCnpjValidation(null);
       }
     } else {
       // Para downgrade, calcular pro-rata e agendar
@@ -593,38 +597,48 @@ const AdminSubscription = () => {
                     <Label htmlFor="customerCpfCnpj">
                       CPF ou CNPJ do responsável <span className="text-destructive">*</span>
                     </Label>
-                    <Input
-                      id="customerCpfCnpj"
-                      placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                      value={customerCpfCnpj}
-                      onChange={(e) => {
-                        // Máscara simples para CPF/CNPJ
-                        const value = e.target.value.replace(/\D/g, "");
-                        if (value.length <= 11) {
-                          // CPF
-                          setCustomerCpfCnpj(
-                            value
-                              .replace(/(\d{3})(\d)/, "$1.$2")
-                              .replace(/(\d{3})(\d)/, "$1.$2")
-                              .replace(/(\d{3})(\d{1,2})$/, "$1-$2")
-                          );
-                        } else {
-                          // CNPJ
-                          setCustomerCpfCnpj(
-                            value
-                              .substring(0, 14)
-                              .replace(/(\d{2})(\d)/, "$1.$2")
-                              .replace(/(\d{3})(\d)/, "$1.$2")
-                              .replace(/(\d{3})(\d)/, "$1/$2")
-                              .replace(/(\d{4})(\d{1,2})$/, "$1-$2")
-                          );
-                        }
-                      }}
-                      maxLength={18}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Necessário para emissão de nota fiscal
-                    </p>
+                    <div className="relative">
+                      <Input
+                        id="customerCpfCnpj"
+                        placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                        value={customerCpfCnpj}
+                        onChange={(e) => {
+                          const masked = maskCpfCnpj(e.target.value);
+                          setCustomerCpfCnpj(masked);
+                          
+                          // Validar em tempo real quando tiver tamanho suficiente
+                          const cleanValue = masked.replace(/\D/g, "");
+                          if (cleanValue.length === 11 || cleanValue.length === 14) {
+                            const validation = validateCpfCnpj(masked);
+                            setCpfCnpjValidation(validation);
+                          } else if (cleanValue.length > 0) {
+                            setCpfCnpjValidation(null);
+                          } else {
+                            setCpfCnpjValidation(null);
+                          }
+                        }}
+                        maxLength={18}
+                        className={cpfCnpjValidation ? (cpfCnpjValidation.valid ? "border-green-500 pr-10" : "border-destructive pr-10") : ""}
+                      />
+                      {cpfCnpjValidation && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          {cpfCnpjValidation.valid ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <X className="h-4 w-4 text-destructive" />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {cpfCnpjValidation ? (
+                      <p className={`text-xs ${cpfCnpjValidation.valid ? "text-green-600" : "text-destructive"}`}>
+                        {cpfCnpjValidation.message}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Necessário para emissão de nota fiscal
+                      </p>
+                    )}
                   </div>
 
                   {/* Coupon Field */}
@@ -707,6 +721,7 @@ const AdminSubscription = () => {
                 setChangePlanDialog(false);
                 setSelectedPlan(null);
                 setCustomerCpfCnpj("");
+                setCpfCnpjValidation(null);
                 clearCoupon();
               }}
             >
