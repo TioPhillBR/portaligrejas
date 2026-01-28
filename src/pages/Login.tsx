@@ -22,11 +22,32 @@ const Login = () => {
   useEffect(() => {
     const checkAndRedirect = async () => {
       if (user) {
-        const { data: isAdmin } = await supabase.rpc("has_any_admin_role", { _user_id: user.id });
-        if (isAdmin) {
-          navigate("/admin");
+        // Buscar a igreja do usuário
+        const { data: membership } = await supabase
+          .from("church_members")
+          .select("church_id, role, churches(slug)")
+          .eq("user_id", user.id)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (membership?.churches?.slug) {
+          const slug = (membership.churches as { slug: string }).slug;
+          const isChurchAdmin = membership.role === 'owner' || membership.role === 'admin';
+          
+          if (isChurchAdmin) {
+            navigate(`/${slug}/admin`);
+          } else {
+            navigate(`/${slug}/membro`);
+          }
         } else {
-          navigate("/membro");
+          // Verificar se é admin da plataforma
+          const { data: isPlatformAdmin } = await supabase.rpc("is_platform_admin", { _user_id: user.id });
+          if (isPlatformAdmin) {
+            navigate("/plataforma");
+          } else {
+            // Usuário sem igreja associada - redirecionar para lista de igrejas
+            navigate("/igrejas");
+          }
         }
       }
     };
