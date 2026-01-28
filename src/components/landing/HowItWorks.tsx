@@ -5,7 +5,7 @@ const steps = [
     number: "1",
     icon: Globe,
     title: "Escolha o nome do seu site",
-    description: "Digite o endereço desejado (ex: portaligrejas.com/igrejaviva) e verifique a disponibilidade.",
+    description: "Digite o endereço desejado (ex: portaligrejas.com.br/igrejaviva) e verifique a disponibilidade.",
   },
   {
     number: "2",

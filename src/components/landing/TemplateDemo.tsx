@@ -32,7 +32,7 @@ export const TemplateDemo = () => {
                     <div className="flex-1 flex justify-center">
                       <div className="bg-background rounded-md px-4 py-1 text-xs text-muted-foreground flex items-center gap-2">
                         <Monitor className="w-3 h-3" />
-                        portaligrejas.com/sua-igreja
+                        portaligrejas.com.br/sua-igreja
                       </div>
                     </div>
                   </div>

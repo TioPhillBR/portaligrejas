@@ -14,7 +14,7 @@ const faqs = [
   {
     question: "Posso usar meu domínio próprio?",
     answer:
-      "Sim. Você pode usar um domínio personalizado (ex: www.suaigreja.com.br) ou manter o endereço gratuito portaligrejas.com/nomedaigreja. A configuração é simples e nossa equipe pode ajudar.",
+      "Sim. Você pode usar um domínio personalizado (ex: www.suaigreja.com.br) ou manter o endereço gratuito portaligrejas.com.br/nomedaigreja. A configuração é simples e nossa equipe pode ajudar.",
   },
   {
     question: "O site funciona no celular?",

@@ -112,7 +112,7 @@ export const LandingHero = () => {
                 <div className="relative">
                   <div className="flex items-center bg-muted rounded-xl overflow-hidden border border-input focus-within:ring-2 focus-within:ring-primary focus-within:border-primary">
                     <span className="px-3 sm:px-4 text-muted-foreground text-sm sm:text-base whitespace-nowrap">
-                      portaligrejas.com/
+                      portaligrejas.com.br/
                     </span>
                     <Input
                       type="text"
@@ -168,7 +168,7 @@ export const LandingHero = () => {
                 {isAvailable === true && (
                   <p className="text-sm sm:text-base text-green-500 flex items-center justify-center gap-2 font-medium">
                     <CheckCircle2 className="w-5 h-5" />
-                    portaligrejas.com/{slug} está disponível!
+                    portaligrejas.com.br/{slug} está disponível!
                   </p>
                 )}
                 {isAvailable === false && (

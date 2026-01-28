@@ -102,7 +102,7 @@ const WizardStepChurch = ({
             <Label htmlFor="slug">Endereço do Site</Label>
             <div className="flex items-center bg-muted rounded-lg overflow-hidden border border-input">
               <span className="px-3 text-muted-foreground text-sm whitespace-nowrap">
-                portaligrejas.com/
+                portaligrejas.com.br/
               </span>
               <Input
                 id="slug"
