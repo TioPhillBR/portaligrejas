@@ -4,6 +4,9 @@ import { Church, Users, TrendingUp, CreditCard, Ticket, Gift, CheckCircle, Clock
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface DashboardStats {
   totalChurches: number;
@@ -25,6 +28,12 @@ interface FreeAccountStats {
   pendingAccounts: number;
 }
 
+interface CouponUseTrend {
+  date: string;
+  uses: number;
+  discount: number;
+}
+
 const PlatformDashboard = () => {
   const [stats, setStats] = useState<DashboardStats>({
     totalChurches: 0,
@@ -43,6 +52,7 @@ const PlatformDashboard = () => {
     usedAccounts: 0,
     pendingAccounts: 0,
   });
+  const [couponTrend, setCouponTrend] = useState<CouponUseTrend[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,6 +61,10 @@ const PlatformDashboard = () => {
 
   const fetchStats = async () => {
     try {
+      // Get date range for trend (last 30 days)
+      const endDate = endOfDay(new Date());
+      const startDate = startOfDay(subDays(new Date(), 29));
+
       // Fetch all stats in parallel
       const [
         totalChurchesRes,
@@ -62,6 +76,7 @@ const PlatformDashboard = () => {
         couponUsesRes,
         grantedAccountsRes,
         usedAccountsRes,
+        couponTrendRes,
       ] = await Promise.all([
         // Church stats
         supabase.from("churches").select("*", { count: "exact", head: true }),
@@ -75,6 +90,13 @@ const PlatformDashboard = () => {
         // Free account stats
         supabase.from("granted_free_accounts").select("*", { count: "exact", head: true }),
         supabase.from("granted_free_accounts").select("*", { count: "exact", head: true }).eq("is_used", true),
+        // Coupon trend data
+        supabase
+          .from("coupon_uses")
+          .select("used_at, discount_applied")
+          .gte("used_at", startDate.toISOString())
+          .lte("used_at", endDate.toISOString())
+          .order("used_at", { ascending: true }),
       ]);
 
       // Calculate total discount from coupon uses
@@ -102,11 +124,50 @@ const PlatformDashboard = () => {
         usedAccounts,
         pendingAccounts: totalGranted - usedAccounts,
       });
+
+      // Process coupon trend data - group by day
+      const trendData = processCouponTrend(couponTrendRes.data || [], startDate, endDate);
+      setCouponTrend(trendData);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const processCouponTrend = (
+    data: { used_at: string | null; discount_applied: number }[],
+    startDate: Date,
+    endDate: Date
+  ): CouponUseTrend[] => {
+    // Create a map with all days in range initialized to 0
+    const dayMap = new Map<string, { uses: number; discount: number }>();
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateKey = format(d, "yyyy-MM-dd");
+      dayMap.set(dateKey, { uses: 0, discount: 0 });
+    }
+
+    // Aggregate data by day
+    data.forEach((item) => {
+      if (item.used_at) {
+        const dateKey = format(new Date(item.used_at), "yyyy-MM-dd");
+        const existing = dayMap.get(dateKey);
+        if (existing) {
+          dayMap.set(dateKey, {
+            uses: existing.uses + 1,
+            discount: existing.discount + (item.discount_applied || 0),
+          });
+        }
+      }
+    });
+
+    // Convert to array
+    return Array.from(dayMap.entries()).map(([date, values]) => ({
+      date: format(new Date(date), "dd/MM", { locale: ptBR }),
+      uses: values.uses,
+      discount: values.discount,
+    }));
   };
 
   const statCards = [
@@ -297,6 +358,92 @@ const PlatformDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Coupon Usage Trend Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Tendência de Uso de Cupons
+          </CardTitle>
+          <CardDescription>Uso de cupons nos últimos 30 dias</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {couponTrend.some((d) => d.uses > 0) ? (
+            <div className="h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={couponTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    className="text-muted-foreground"
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    className="text-muted-foreground"
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                    }}
+                    labelStyle={{ color: "hsl(var(--foreground))" }}
+                    formatter={(value: number, name: string) => [
+                      name === "uses" ? value : `R$ ${value.toFixed(2)}`,
+                      name === "uses" ? "Usos" : "Desconto",
+                    ]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="uses"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 6 }}
+                    name="uses"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="discount"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 6 }}
+                    name="discount"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <Ticket className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p>Nenhum uso de cupom nos últimos 30 dias</p>
+                <p className="text-sm">Os dados aparecerão aqui quando cupons forem utilizados</p>
+              </div>
+            </div>
+          )}
+          
+          {/* Chart Legend */}
+          <div className="flex items-center justify-center gap-6 mt-4 pt-4 border-t border-border">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-primary" />
+              <span className="text-sm text-muted-foreground">Quantidade de Usos</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500" />
+              <span className="text-sm text-muted-foreground">Valor em Descontos (R$)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
