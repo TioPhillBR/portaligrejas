@@ -34,27 +34,27 @@ import { cn } from "@/lib/utils";
 import ContextualTooltip from "./ContextualTooltip";
 import WelcomeTutorialModal from "./WelcomeTutorialModal";
 
-const sidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/admin", tutorialId: "dashboard" },
-  { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
-  { icon: Home, label: "Seções da Home", href: "/admin/secoes" },
-  { icon: Clock, label: "Horários de Culto", href: "/admin/horarios" },
-  { icon: Calendar, label: "Eventos", href: "/admin/eventos", tutorialId: "events" },
-  { icon: Users, label: "Ministérios", href: "/admin/ministerios", tutorialId: "ministries" },
-  { icon: Image, label: "Galeria", href: "/admin/galeria", tutorialId: "gallery" },
-  { icon: FileText, label: "Blog", href: "/admin/blog" },
-  { icon: BarChart3, label: "Estatísticas Blog", href: "/admin/blog/estatisticas" },
-  { icon: Users, label: "Categorias Blog", href: "/admin/blog/categorias" },
-  { icon: Tag, label: "Tags Blog", href: "/admin/blog/tags" },
-  { icon: MessageCircle, label: "Comentários", href: "/admin/comentarios" },
-  { icon: Radio, label: "Comunicação", href: "/admin/comunicacao", tutorialId: "broadcast" },
-  { icon: MessageSquare, label: "Mensagens", href: "/admin/mensagens", tutorialId: "communication" },
-  { icon: Heart, label: "Pedidos de Oração", href: "/admin/oracoes" },
-  { icon: Settings, label: "Configurações", href: "/admin/configuracoes", tutorialId: "settings" },
-  { icon: Palette, label: "Temas", href: "/admin/temas", tutorialId: "themes" },
-  { icon: Shield, label: "Usuários", href: "/admin/usuarios" },
-  { icon: CreditCard, label: "Assinatura", href: "/admin/assinatura" },
-  { icon: Receipt, label: "Faturas", href: "/admin/faturas" },
+const getSidebarItems = (slug: string) => [
+  { icon: LayoutDashboard, label: "Dashboard", href: `/${slug}/admin`, tutorialId: "dashboard" },
+  { icon: BarChart3, label: "Analytics", href: `/${slug}/admin/analytics` },
+  { icon: Home, label: "Seções da Home", href: `/${slug}/admin/secoes` },
+  { icon: Clock, label: "Horários de Culto", href: `/${slug}/admin/horarios` },
+  { icon: Calendar, label: "Eventos", href: `/${slug}/admin/eventos`, tutorialId: "events" },
+  { icon: Users, label: "Ministérios", href: `/${slug}/admin/ministerios`, tutorialId: "ministries" },
+  { icon: Image, label: "Galeria", href: `/${slug}/admin/galeria`, tutorialId: "gallery" },
+  { icon: FileText, label: "Blog", href: `/${slug}/admin/blog` },
+  { icon: BarChart3, label: "Estatísticas Blog", href: `/${slug}/admin/blog/estatisticas` },
+  { icon: Users, label: "Categorias Blog", href: `/${slug}/admin/blog/categorias` },
+  { icon: Tag, label: "Tags Blog", href: `/${slug}/admin/blog/tags` },
+  { icon: MessageCircle, label: "Comentários", href: `/${slug}/admin/comentarios` },
+  { icon: Radio, label: "Comunicação", href: `/${slug}/admin/comunicacao`, tutorialId: "broadcast" },
+  { icon: MessageSquare, label: "Mensagens", href: `/${slug}/admin/mensagens`, tutorialId: "communication" },
+  { icon: Heart, label: "Pedidos de Oração", href: `/${slug}/admin/oracoes` },
+  { icon: Settings, label: "Configurações", href: `/${slug}/admin/configuracoes`, tutorialId: "settings" },
+  { icon: Palette, label: "Temas", href: `/${slug}/admin/temas`, tutorialId: "themes" },
+  { icon: Shield, label: "Usuários", href: `/${slug}/admin/usuarios` },
+  { icon: CreditCard, label: "Assinatura", href: `/${slug}/admin/assinatura` },
+  { icon: Receipt, label: "Faturas", href: `/${slug}/admin/faturas` },
 ];
 
 const AdminLayout = () => {
@@ -121,9 +121,10 @@ const AdminLayout = () => {
           {/* Sidebar Navigation */}
           <ScrollArea className="flex-1 py-4">
             <nav className="px-3 space-y-1">
-              {sidebarItems.map((item) => {
+              {getSidebarItems(slug || '').map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname === item.href;
+                const isActive = location.pathname === item.href || 
+                  (item.href === `/${slug}/admin` && location.pathname === `/${slug}/admin`);
                 return (
                   <Link
                     key={item.href}
@@ -145,7 +146,7 @@ const AdminLayout = () => {
               })}
               {/* Link to main site */}
               <a
-                href="/"
+                href={`/${slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors mt-4 border-t pt-4"
