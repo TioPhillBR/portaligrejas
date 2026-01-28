@@ -1,142 +1,119 @@
 
-# Plano de Correção: Tela Branca Após Login
+# Correção do Erro "supabaseUrl is required" no Deploy Docker
 
 ## Diagnóstico
 
-Após análise profunda dos logs, código-fonte e fluxo de navegação, identifiquei **três problemas críticos** que causam a tela branca:
+O erro ocorre porque as variáveis de ambiente `VITE_*` não estão sendo injetadas durante o build do Docker. O Vite substitui essas variáveis em tempo de compilação, não em runtime.
 
-### Problema 1: Redirecionamento Inválido no Login
+### Problema Identificado
 
-**Arquivo:** `src/pages/Login.tsx` (linhas 27-29)
-
-O código atual redireciona para:
-- `/admin` quando o usuário é admin
-- `/membro` quando não é admin
-
-Essas rotas **não existem** no sistema multi-tenant. As rotas corretas devem incluir o slug da igreja:
-- `/${slug}/admin`
-- `/${slug}/membro`
-
-### Problema 2: Links do Sidebar com Rotas Absolutas
-
-**Arquivo:** `src/components/admin/AdminLayout.tsx` (linhas 38-58)
-
-Os itens do sidebar usam caminhos absolutos como `/admin/eventos`, quando deveriam usar caminhos relativos baseados no slug atual da igreja.
-
-### Problema 3: Link "Ver Site" Apontando para Raiz
-
-**Arquivo:** `src/components/admin/AdminLayout.tsx` (linha 149)
-
-O link "Ver Site" aponta para `/` em vez de `/${slug}`.
-
-## Solução Técnica
-
-### 1. Corrigir Login.tsx
-
-Alterar o redirecionamento para buscar a igreja do usuário e redirecionar corretamente:
-
-```typescript
-useEffect(() => {
-  const checkAndRedirect = async () => {
-    if (user) {
-      // Buscar a igreja do usuário
-      const { data: membership } = await supabase
-        .from("church_members")
-        .select("church_id, role, churches(slug)")
-        .eq("user_id", user.id)
-        .eq("is_active", true)
-        .maybeSingle();
-
-      if (membership?.churches?.slug) {
-        const slug = membership.churches.slug;
-        const isChurchAdmin = membership.role === 'owner' || membership.role === 'admin';
-        
-        if (isChurchAdmin) {
-          navigate(`/${slug}/admin`);
-        } else {
-          navigate(`/${slug}/membro`);
-        }
-      } else {
-        // Verificar se é admin da plataforma
-        const { data: isPlatformAdmin } = await supabase.rpc("is_platform_admin", { _user_id: user.id });
-        if (isPlatformAdmin) {
-          navigate("/plataforma");
-        } else {
-          // Usuário sem igreja associada - redirecionar para lista de igrejas
-          navigate("/igrejas");
-        }
-      }
-    }
-  };
-  checkAndRedirect();
-}, [user, navigate]);
+```text
++------------------+           +------------------+
+|   docker-compose |           |    Dockerfile    |
+|                  |           |                  |
+| env_file: .env   |--runtime->| Variáveis só     |
+|      (errado)    |           | disponíveis após |
+|                  |           | o build terminar |
++------------------+           +------------------+
+                                       |
+                                       v
+                               +------------------+
+                               | Build falha pois |
+                               | VITE_* é undefined|
+                               +------------------+
 ```
 
-### 2. Corrigir AdminLayout.tsx
+## Solução
 
-Modificar os links para usar rotas relativas ao slug:
+### 1. Atualizar docker-compose.yml
 
-```typescript
-// Alterar sidebarItems para usar função que gera href dinâmico
-const getSidebarItems = (slug: string) => [
-  { icon: LayoutDashboard, label: "Dashboard", href: `/${slug}/admin`, tutorialId: "dashboard" },
-  { icon: BarChart3, label: "Analytics", href: `/${slug}/admin/analytics` },
-  { icon: Home, label: "Seções da Home", href: `/${slug}/admin/secoes` },
-  // ... demais itens
-];
+Adicionar `build.args` para passar as variáveis durante o build:
 
-// No componente:
-const items = getSidebarItems(slug || '');
-
-// E corrigir o link "Ver Site":
-<a href={`/${slug}`} target="_blank" ...>
+```yaml
+services:
+  portal-igrejas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
 ```
 
-### 3. Verificar isActive no Sidebar
+### 2. Criar arquivo .env para Docker
 
-A comparação de rota ativa também precisa considerar o slug:
+Criar um arquivo `.env` (não `.env.local`) na raiz do projeto com as variáveis:
 
-```typescript
-const isActive = location.pathname === item.href || 
-  (item.href === `/${slug}/admin` && location.pathname === `/${slug}/admin`);
+```env
+VITE_SUPABASE_URL=https://nyxnvsaivmvllqevgmeh.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_PROJECT_ID=nyxnvsaivmvllqevgmeh
 ```
+
+### 3. Comando de Build Atualizado
+
+Se estiver fazendo build manual do Docker:
+
+```bash
+docker build \
+  --build-arg VITE_SUPABASE_URL=https://nyxnvsaivmvllqevgmeh.supabase.co \
+  --build-arg VITE_SUPABASE_PUBLISHABLE_KEY=eyJhbGciOiJI... \
+  --build-arg VITE_SUPABASE_PROJECT_ID=nyxnvsaivmvllqevgmeh \
+  -t portal-igrejas .
+```
+
+---
 
 ## Arquivos a Modificar
 
 | Arquivo | Alteração |
 |---------|-----------|
-| `src/pages/Login.tsx` | Corrigir lógica de redirecionamento pós-login |
-| `src/components/admin/AdminLayout.tsx` | Usar rotas dinâmicas baseadas no slug |
+| `docker-compose.yml` | Adicionar seção `build.args` para passar variáveis em build-time |
 
-## Fluxo Corrigido
+## Código Atualizado para docker-compose.yml
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                     FLUXO DE LOGIN                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   Usuário faz login                                         │
-│         │                                                   │
-│         ▼                                                   │
-│   Busca church_members do usuário                           │
-│         │                                                   │
-│         ├── Tem igreja? ─────────────────┐                  │
-│         │                                │                  │
-│         │   SIM                          │   NÃO            │
-│         ▼                                ▼                  │
-│   É owner/admin?              É platform_admin?             │
-│    │         │                    │         │               │
-│   SIM       NÃO                  SIM       NÃO              │
-│    │         │                    │         │               │
-│    ▼         ▼                    ▼         ▼               │
-│ /:slug/   /:slug/           /plataforma   /igrejas          │
-│   admin    membro                                           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+```yaml
+version: '3.8'
+
+services:
+  portal-igrejas:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
+    container_name: portal-igrejas
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.portal-igrejas.rule=Host(`portaligrejas.com.br`)"
+      - "traefik.http.services.portal-igrejas.loadbalancer.server.port=3000"
+
+# Para fazer o deploy, crie um arquivo .env com:
+# VITE_SUPABASE_URL=https://nyxnvsaivmvllqevgmeh.supabase.co
+# VITE_SUPABASE_PUBLISHABLE_KEY=sua-anon-key
+# VITE_SUPABASE_PROJECT_ID=nyxnvsaivmvllqevgmeh
 ```
 
-## Impacto
+## Instruções de Deploy
 
-- **Login funcional**: Usuários serão redirecionados para a página correta
-- **Navegação do admin**: Todos os links funcionarão corretamente dentro do contexto da igreja
-- **Multi-tenancy mantido**: Cada igreja mantém seu próprio espaço isolado
+1. Criar arquivo `.env` na raiz com as variáveis do Supabase
+2. Executar `docker-compose build --no-cache`
+3. Executar `docker-compose up -d`
+
+## Observação
+
+O deploy nativo do Lovable (https://portaligrejas.lovable.app) funciona corretamente. Este ajuste é necessário apenas para deploys customizados via Docker.
