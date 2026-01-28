@@ -3,6 +3,19 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Build arguments for environment variables - MUST be declared before use
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_PUBLISHABLE_KEY
+ARG VITE_SUPABASE_PROJECT_ID
+
+# Set environment variables for build - Vite reads these during compilation
+ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
+ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
+
+# Debug: Print env vars to verify they are set (remove in production)
+RUN echo "Building with SUPABASE_URL: ${VITE_SUPABASE_URL:-NOT_SET}"
+
 # Install dependencies
 COPY package.json package-lock.json* bun.lockb* ./
 RUN npm install
@@ -10,18 +23,11 @@ RUN npm install
 # Copy source files
 COPY . .
 
-# Build arguments for environment variables
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-ARG VITE_SUPABASE_PROJECT_ID
-
-# Set environment variables for build
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
-ENV VITE_SUPABASE_PROJECT_ID=$VITE_SUPABASE_PROJECT_ID
-
-# Build the application
+# Build the application - Vite will inline the env vars
 RUN npm run build
+
+# Verify build output exists
+RUN ls -la /app/dist/
 
 # Stage 2: Production
 FROM nginx:alpine AS production
