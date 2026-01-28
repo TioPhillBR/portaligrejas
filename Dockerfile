@@ -3,15 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Build arguments for environment variables
-ARG VITE_SUPABASE_URL
-ARG VITE_SUPABASE_PUBLISHABLE_KEY
-ARG VITE_SUPABASE_PROJECT_ID
-
-# Set environment variables for build
-ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
-ENV VITE_SUPABASE_PROJECT_ID=${VITE_SUPABASE_PROJECT_ID}
+# Hardcoded public Supabase configuration (these are publishable/public keys, safe to include)
+ENV VITE_SUPABASE_URL="https://nyxnvsaivmvllqevgmeh.supabase.co"
+ENV VITE_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55eG52c2Fpdm12bGxxZXZnbWVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk1MzUyMDgsImV4cCI6MjA4NTExMTIwOH0.lPXNy0Jx8jBOKYNhfWymmnv0Iavcng0d_9CFjZmTkn4"
+ENV VITE_SUPABASE_PROJECT_ID="nyxnvsaivmvllqevgmeh"
 
 # Install dependencies
 COPY package.json package-lock.json* bun.lockb* ./
