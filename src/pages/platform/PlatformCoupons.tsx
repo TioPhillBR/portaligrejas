@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Ticket, Plus, Gift, Trash2, Loader2, Copy, Check, UserPlus } from "lucide-react";
+import { Ticket, Plus, Gift, Trash2, Loader2, Copy, Check, UserPlus, Link as LinkIcon, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -39,6 +39,7 @@ interface GrantedAccount {
   used_at: string | null;
   created_at: string;
   expires_at: string | null;
+  token: string | null;
 }
 
 const PLAN_LABELS: Record<string, string> = {
@@ -173,6 +174,20 @@ const PlatformCoupons = () => {
     }
   };
 
+  const generateToken = () => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let token = "";
+    for (let i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  };
+
+  const getRegistrationUrl = (token: string) => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/cadastro/convite?token=${token}`;
+  };
+
   const handleCreateGrantedAccount = async () => {
     if (!accountForm.email) {
       toast.error("Preencha o email");
@@ -181,16 +196,19 @@ const PlatformCoupons = () => {
 
     setSaving(true);
     try {
+      const token = generateToken();
+      
       const { error } = await supabase.from("granted_free_accounts").insert({
         email: accountForm.email.toLowerCase(),
         plan: accountForm.plan,
         notes: accountForm.notes || null,
         expires_at: accountForm.expires_at || null,
+        token: token,
       });
 
       if (error) throw error;
 
-      toast.success("Conta gratuita cadastrada!");
+      toast.success("Conta gratuita cadastrada! Link de registro gerado.");
       setAccountDialogOpen(false);
       setAccountForm({ email: "", plan: "prata", notes: "", expires_at: "" });
       fetchData();
@@ -528,9 +546,9 @@ const PlatformCoupons = () => {
                   <TableRow>
                     <TableHead>Email</TableHead>
                     <TableHead>Plano</TableHead>
+                    <TableHead>Link de Registro</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Expira em</TableHead>
-                    <TableHead>Cadastrado em</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -567,6 +585,37 @@ const PlatformCoupons = () => {
                           </Badge>
                         </TableCell>
                         <TableCell>
+                          {account.token && !account.is_used ? (
+                            <div className="flex items-center gap-2">
+                              <code className="bg-muted px-2 py-1 rounded text-xs max-w-[200px] truncate">
+                                {getRegistrationUrl(account.token)}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => copyToClipboard(getRegistrationUrl(account.token!))}
+                              >
+                                {copiedCode === getRegistrationUrl(account.token!) ? (
+                                  <Check className="h-3 w-3 text-green-500" />
+                                ) : (
+                                  <Copy className="h-3 w-3" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => window.open(getRegistrationUrl(account.token!), "_blank")}
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {account.is_used ? (
                             <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                               Utilizado
@@ -579,9 +628,6 @@ const PlatformCoupons = () => {
                           {account.expires_at
                             ? format(new Date(account.expires_at), "dd/MM/yyyy", { locale: ptBR })
                             : "Permanente"}
-                        </TableCell>
-                        <TableCell>
-                          {format(new Date(account.created_at), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button

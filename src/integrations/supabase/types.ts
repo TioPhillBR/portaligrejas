@@ -889,6 +889,7 @@ export type Database = {
       granted_free_accounts: {
         Row: {
           church_id: string | null
+          claimed_by: string | null
           created_at: string | null
           email: string
           expires_at: string | null
@@ -897,10 +898,12 @@ export type Database = {
           is_used: boolean | null
           notes: string | null
           plan: string
+          token: string | null
           used_at: string | null
         }
         Insert: {
           church_id?: string | null
+          claimed_by?: string | null
           created_at?: string | null
           email: string
           expires_at?: string | null
@@ -909,10 +912,12 @@ export type Database = {
           is_used?: boolean | null
           notes?: string | null
           plan?: string
+          token?: string | null
           used_at?: string | null
         }
         Update: {
           church_id?: string | null
+          claimed_by?: string | null
           created_at?: string | null
           email?: string
           expires_at?: string | null
@@ -921,6 +926,7 @@ export type Database = {
           is_used?: boolean | null
           notes?: string | null
           plan?: string
+          token?: string | null
           used_at?: string | null
         }
         Relationships: [
