@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { PortalLogo } from "@/components/PortalLogo";
-import { LandingHero } from "@/components/landing/LandingHero";
+import { LandingHero, LandingHeroRef } from "@/components/landing/LandingHero";
 import { Features } from "@/components/landing/Features";
 import { TemplateDemo } from "@/components/landing/TemplateDemo";
 import { PricingCards } from "@/components/landing/PricingCards";
@@ -14,6 +14,12 @@ import { Menu, X } from "lucide-react";
 
 const LandingPage = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const heroRef = useRef<LandingHeroRef>(null);
+
+  const handleCreateSiteClick = () => {
+    setMobileMenuOpen(false);
+    heroRef.current?.focusSlugInput();
+  };
 
   const navLinks = [
     { href: "#recursos", label: "Recursos" },
@@ -63,8 +69,8 @@ const LandingPage = () => {
               <Button variant="ghost" asChild>
                 <Link to="/login">Entrar</Link>
               </Button>
-              <Button asChild>
-                <Link to="/criar-igreja">Criar meu site</Link>
+              <Button onClick={handleCreateSiteClick}>
+                Criar meu site
               </Button>
             </div>
 
@@ -109,8 +115,8 @@ const LandingPage = () => {
                 <Button variant="outline" asChild className="w-full">
                   <Link to="/login">Entrar</Link>
                 </Button>
-                <Button asChild className="w-full">
-                  <Link to="/criar-igreja">Criar meu site</Link>
+                <Button className="w-full" onClick={handleCreateSiteClick}>
+                  Criar meu site
                 </Button>
               </div>
             </nav>
@@ -120,10 +126,10 @@ const LandingPage = () => {
 
       {/* Main Content */}
       <main>
-        <LandingHero />
+        <LandingHero ref={heroRef} />
         <Features />
         <TemplateDemo />
-        <PricingCards />
+        <PricingCards onCreateSite={handleCreateSiteClick} />
         <HowItWorks />
         <Testimonials />
         <FAQ />

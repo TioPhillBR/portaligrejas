@@ -1,7 +1,10 @@
 import { Check, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+
+interface PricingCardsProps {
+  onCreateSite?: () => void;
+}
 
 const plans = [
   {
@@ -76,7 +79,7 @@ const plans = [
   },
 ];
 
-export const PricingCards = () => {
+export const PricingCards = ({ onCreateSite }: PricingCardsProps) => {
   return (
     <section id="precos" className="py-20 sm:py-24 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -149,12 +152,12 @@ export const PricingCards = () => {
               </ul>
 
               <Button
-                asChild
                 variant={plan.highlighted ? "default" : "outline"}
                 className="w-full"
                 size="lg"
+                onClick={onCreateSite}
               >
-                <Link to="/criar-igreja">{plan.cta}</Link>
+                {plan.cta}
               </Button>
             </div>
           ))}
