@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +6,29 @@ import { CheckCircle2, XCircle, Loader2, ArrowRight, Search } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { useDebounce } from "@/hooks/useDebounce";
 
-export const LandingHero = () => {
+export interface LandingHeroRef {
+  focusSlugInput: () => void;
+}
+
+export const LandingHero = forwardRef<LandingHeroRef>((_, ref) => {
   const navigate = useNavigate();
   const [slug, setSlug] = useState("");
   const [isChecking, setIsChecking] = useState(false);
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const slugInputRef = useRef<HTMLInputElement>(null);
 
   const debouncedSlug = useDebounce(slug, 500);
+
+  // Expose focus method to parent
+  useImperativeHandle(ref, () => ({
+    focusSlugInput: () => {
+      slugInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => {
+        slugInputRef.current?.focus();
+      }, 500);
+    },
+  }));
 
   // Normalize slug
   const normalizeSlug = (value: string) => {
@@ -115,6 +130,7 @@ export const LandingHero = () => {
                       portaligrejas.com.br/
                     </span>
                     <Input
+                      ref={slugInputRef}
                       type="text"
                       value={slug}
                       onChange={handleSlugChange}
@@ -203,4 +219,6 @@ export const LandingHero = () => {
       </div>
     </section>
   );
-};
+});
+
+LandingHero.displayName = "LandingHero";
