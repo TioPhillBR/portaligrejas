@@ -16,6 +16,7 @@ import OnboardingPage from "./pages/onboarding/OnboardingPage";
 // Auth pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import RegisterWithGrant from "./pages/RegisterWithGrant";
 import Setup from "./pages/Setup";
 
 // Church site pages
@@ -123,6 +124,7 @@ const App = () => (
               {/* ===== AUTH PAGES ===== */}
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Register />} />
+              <Route path="/cadastro/convite" element={<RegisterWithGrant />} />
               <Route path="/setup" element={<Setup />} />
               
               {/* ===== PLATFORM ADMIN ROUTES (/plataforma) ===== */}
