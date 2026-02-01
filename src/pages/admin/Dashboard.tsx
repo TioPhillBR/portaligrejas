@@ -150,28 +150,28 @@ const AdminDashboard = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <a
-              href="/admin/eventos"
+              href={`/${slug}/admin/eventos`}
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <Calendar className="w-8 h-8 text-primary" />
               <span className="text-sm font-medium">Novo Evento</span>
             </a>
             <a
-              href="/admin/galeria"
+              href={`/${slug}/admin/galeria`}
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <Image className="w-8 h-8 text-primary" />
               <span className="text-sm font-medium">Adicionar Fotos</span>
             </a>
             <a
-              href="/admin/mensagens"
+              href={`/${slug}/admin/mensagens`}
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
               <MessageSquare className="w-8 h-8 text-primary" />
               <span className="text-sm font-medium">Ver Mensagens</span>
             </a>
             <a
-              href="/"
+              href={`/${slug}`}
               target="_blank"
               className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
             >
