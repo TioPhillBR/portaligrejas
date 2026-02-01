@@ -134,6 +134,9 @@ const Login = () => {
             </Button>
           </form>
           <div className="mt-6 text-center space-y-2">
+            <Link to="/esqueci-senha" className="text-sm text-primary hover:underline block">
+              Esqueci minha senha
+            </Link>
             <p className="text-sm text-muted-foreground">
               Não tem uma conta?{" "}
               <Link to="/cadastro" className="text-primary hover:underline font-medium">

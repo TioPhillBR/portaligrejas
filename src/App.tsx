@@ -17,8 +17,14 @@ import OnboardingPage from "./pages/onboarding/OnboardingPage";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegisterWithGrant from "./pages/RegisterWithGrant";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import Setup from "./pages/Setup";
 
+// Legal pages
+import TermsOfService from "./pages/legal/TermsOfService";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import CookiesPolicy from "./pages/legal/CookiesPolicy";
 // Church site pages
 import Index from "./pages/Index";
 import EventDetails from "./pages/EventDetails";
@@ -125,7 +131,14 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/cadastro" element={<Register />} />
               <Route path="/cadastro/convite" element={<RegisterWithGrant />} />
+              <Route path="/esqueci-senha" element={<ForgotPassword />} />
+              <Route path="/redefinir-senha" element={<ResetPassword />} />
               <Route path="/setup" element={<Setup />} />
+              
+              {/* ===== LEGAL PAGES ===== */}
+              <Route path="/termos" element={<TermsOfService />} />
+              <Route path="/privacidade" element={<PrivacyPolicy />} />
+              <Route path="/cookies" element={<CookiesPolicy />} />
               
               {/* ===== PLATFORM ADMIN ROUTES (/plataforma) ===== */}
               <Route path="/plataforma" element={<PlatformLayout />}>

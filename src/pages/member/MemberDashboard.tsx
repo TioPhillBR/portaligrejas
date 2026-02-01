@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Users, MessageCircle, Bell, ChevronRight, User, Calendar, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, isToday, isFuture } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
 interface Ministry {
   id: string;
   name: string;
@@ -31,6 +30,7 @@ interface Event {
 
 const MemberDashboard = () => {
   const { user } = useAuth();
+  const { slug } = useParams<{ slug: string }>();
   const [profile, setProfile] = useState<{ full_name: string | null } | null>(null);
   const [myMinistries, setMyMinistries] = useState<Ministry[]>([]);
   const [recentBroadcasts, setRecentBroadcasts] = useState<BroadcastMessage[]>([]);
@@ -127,7 +127,7 @@ const MemberDashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
-        <Link to="/membro/perfil">
+        <Link to={`/${slug}/membro/perfil`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -137,7 +137,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/membro/eventos">
+        <Link to={`/${slug}/membro/eventos`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -147,7 +147,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/membro/ministerios">
+        <Link to={`/${slug}/membro/ministerios`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -157,7 +157,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/membro/grupos">
+        <Link to={`/${slug}/membro/grupos`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -167,7 +167,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/membro/avisos">
+        <Link to={`/${slug}/membro/avisos`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -177,7 +177,7 @@ const MemberDashboard = () => {
             </CardContent>
           </Card>
         </Link>
-        <Link to="/membro/buscar">
+        <Link to={`/${slug}/membro/buscar`}>
           <Card className="hover:border-primary/50 transition-colors cursor-pointer h-full">
             <CardContent className="p-2 md:p-4 flex flex-col items-center text-center gap-1 md:gap-2">
               <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -194,7 +194,7 @@ const MemberDashboard = () => {
         <Card className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
             <CardTitle className="text-base md:text-lg">Próximos Eventos</CardTitle>
-            <Link to="/membro/eventos">
+            <Link to={`/${slug}/membro/eventos`}>
               <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
                 Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>
@@ -205,7 +205,7 @@ const MemberDashboard = () => {
               {upcomingEvents.map((event) => (
                 <Link
                   key={event.id}
-                  to="/membro/eventos"
+                  to={`/${slug}/membro/eventos`}
                   className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg hover:bg-muted transition-colors"
                 >
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-primary/10 flex flex-col items-center justify-center text-primary flex-shrink-0">
@@ -238,7 +238,7 @@ const MemberDashboard = () => {
         <Card className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
             <CardTitle className="text-base md:text-lg">Meus Ministérios</CardTitle>
-            <Link to="/membro/ministerios">
+            <Link to={`/${slug}/membro/ministerios`}>
               <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
                 Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>
@@ -249,7 +249,7 @@ const MemberDashboard = () => {
               <div className="text-center py-4 md:py-6 text-muted-foreground">
                 <Users className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">Você ainda não participa de nenhum ministério</p>
-                <Link to="/membro/ministerios">
+                <Link to={`/${slug}/membro/ministerios`}>
                   <Button variant="link" className="mt-2 text-sm">
                     Explorar ministérios
                   </Button>
@@ -260,7 +260,7 @@ const MemberDashboard = () => {
                 {myMinistries.slice(0, 4).map((ministry) => (
                   <Link
                     key={ministry.id}
-                    to={`/membro/grupos/${ministry.id}`}
+                    to={`/${slug}/membro/grupos/${ministry.id}`}
                     className="flex items-center gap-2 md:gap-3 p-2 md:p-3 rounded-lg hover:bg-muted transition-colors"
                   >
                     <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-r ${ministry.color} flex items-center justify-center text-white font-bold text-sm flex-shrink-0`}>
@@ -279,7 +279,7 @@ const MemberDashboard = () => {
         <Card className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between p-3 md:p-6">
             <CardTitle className="text-base md:text-lg">Avisos Recentes</CardTitle>
-            <Link to="/membro/avisos">
+            <Link to={`/${slug}/membro/avisos`}>
               <Button variant="ghost" size="sm" className="text-xs md:text-sm px-2 md:px-3">
                 Ver todos <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-1" />
               </Button>

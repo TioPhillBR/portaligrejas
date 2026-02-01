@@ -70,9 +70,10 @@ const Register = () => {
     } else {
       toast({
         title: "Conta criada com sucesso!",
-        description: "Redirecionando para a área do membro...",
+        description: "Verifique seu email para confirmar sua conta.",
       });
-      navigate("/membro");
+      // Redirecionar para a lista de igrejas para o usuário escolher uma igreja
+      navigate("/igrejas");
     }
 
     setLoading(false);
